@@ -1,0 +1,77 @@
+/* Neta-Resume design system — tokens + base + utilities.
+   Ported from the Claude Design "Neta-Resume Design System" (light + dark themes). */
+
+:root,
+[data-theme="light"] {
+  --bg:#F7F6F3;--panel:#F4F2ED;--card:#FCFBF9;--card2:#FFFFFF;--sunken:#F1EFE9;
+  --rule:#E2DDD3;--rule2:#EEEBE3;--border:#D8D2C6;--border2:#C9C2B5;
+  --faint:#ABA399;--muted:#837C73;--ink2:#4A4540;--ink:#1A1714;
+  --accent:#34507A;--accent-2:#5C7299;--accent-3:#9AB0D4;--accent-soft:#EDF1F7;--accent-soft-bd:#C7D2E4;--accent-soft-fg:#34507A;
+  --btn-bg:#1A1714;--btn-fg:#F7F6F3;
+  --sev1:#9E2B25;--sev1-bg:#F4E4E2;--sev1-bd:#E3C4C0;--sev2:#B0631E;--sev2-bg:#F5E7D8;--sev2-bd:#E8D3B6;
+  --sev3:#7C7430;--sev3-bg:#EFEDDB;--ok:#3F7A52;--ok-bg:#E4EEE7;
+  --warn-bg:#F1EFE9;--shadow:rgba(26,23,20,0.34);--photo-a:#EEEBE3;--photo-b:#F4F2ED;--gridline:#EAE7DF;
+  --glow1:rgba(52,80,122,0.13);--glow2:rgba(52,80,122,0.07);
+}
+
+[data-theme="dark"] {
+  --bg:#070B13;--panel:#0C111C;--card:#141C2C;--card2:#1A2435;--sunken:#0A0F1A;
+  --rule:#2A3547;--rule2:#222B3A;--border:#313D52;--border2:#3C4A62;
+  --faint:#5F6C82;--muted:#8A97AB;--ink2:#B9C2D0;--ink:#E9EDF4;
+  --accent:#86A8DC;--accent-2:#6E8FC4;--accent-3:#4F668F;--accent-soft:#1B2840;--accent-soft-bd:#33476A;--accent-soft-fg:#A6C2EA;
+  --btn-bg:#E9EDF4;--btn-fg:#0F141E;
+  --sev1:#E08379;--sev1-bg:#37211F;--sev1-bd:#4E2F2B;--sev2:#D9954F;--sev2-bg:#352818;--sev2-bd:#4D3A20;
+  --sev3:#C2B45E;--sev3-bg:#2E2B19;--ok:#74B68A;--ok-bg:#16261D;
+  --warn-bg:#141C2C;--shadow:rgba(0,0,0,0.66);--photo-a:#22304A;--photo-b:#18223A;--gridline:#161F30;
+  --glow1:rgba(96,140,215,0.20);--glow2:rgba(72,108,178,0.12);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: 'Archivo', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background:
+    radial-gradient(1100px 760px at 86% -12%, var(--glow1), transparent 62%),
+    radial-gradient(840px 640px at -8% 16%, var(--glow2), transparent 58%),
+    radial-gradient(760px 760px at 50% 118%, var(--glow1), transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+::selection { background: #34507A; color: #F7F6F3; }
+a { color: inherit; }
+
+[data-theme] *,
+[data-theme] { transition: background-color .3s ease, border-color .3s ease, box-shadow .3s ease, color .3s ease; }
+
+/* serif display / mono labels helpers */
+.serif { font-family: 'Newsreader', serif; }
+.mono  { font-family: 'IBM Plex Mono', monospace; }
+.deva  { font-family: 'Mukta', sans-serif; }
+
+/* hover/interaction utilities (React inline styles can't do :hover) */
+.lift { transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
+.lift:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 16px 36px -20px var(--shadow); }
+.liftsm:hover { transform: translateY(-2px); border-color: var(--accent-soft-bd); }
+.navlink { text-decoration: none; transition: color .15s ease; }
+.navlink:hover { color: var(--accent); }
+.btnDark { transition: transform .15s ease, background-color .15s ease, color .15s ease; }
+.btnDark:hover { background: var(--accent) !important; color: #fff !important; transform: translateY(-1px); }
+.btnGhost { transition: transform .15s ease, border-color .15s ease; }
+.btnGhost:hover { border-color: var(--ink) !important; transform: translateY(-1px); }
+.focusring:focus-within { border-color: var(--accent) !important; }
+.scroll::-webkit-scrollbar { width: 9px; height: 9px; }
+.scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 9px; }
+
+@keyframes nrFadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes nrGrowX  { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes nrDraw   { from { stroke-dashoffset: 1400; } to { stroke-dashoffset: 0; } }
+@keyframes nrSpinIn { from { opacity: 0; transform: rotate(-110deg) scale(.82); } to { opacity: 1; transform: rotate(-90deg) scale(1); } }
+@keyframes nrPulse  { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+@keyframes nrPop    { from { opacity: 0; transform: scale(.96) translateY(8px); } to { opacity: 1; transform: none; } }
+.fadeUp { animation: nrFadeUp .5s ease both; }
+
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

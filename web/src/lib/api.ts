@@ -1,6 +1,5 @@
-// Typed client for the FastAPI read layer. Called from server components only (no DB creds in browser).
-// Run `npm run codegen` (with the API up) to generate src/types/api.ts from OpenAPI, then replace the
-// hand-written shapes below with the generated ones.
+// Typed client for the FastAPI read layer. Called from server components (no DB creds in browser).
+// Run `npm run codegen` (with the API up) to regenerate src/types/api.ts from OpenAPI.
 
 const API_BASE = process.env.NETA_API_BASE ?? "http://localhost:8000";
 
@@ -49,7 +48,7 @@ export interface CriminalCase {
   filed_year: number | null;
   status: string;
   is_convicted: boolean;
-  severity: string | null;
+  severity: "heinous" | "serious" | "minor" | null;
   sections: string[];
   description: string | null;
   source: Source;
@@ -64,9 +63,35 @@ export interface PersonResume {
   criminal_cases: CriminalCase[];
 }
 
+export interface PersonSummary {
+  id: number;
+  display_name: string;
+  current_party: string | null;
+  current_house: string | null;
+  constituency: string | null;
+  net_assets: number | null;
+  pending_cases: number;
+  total_cases: number;
+  top_severity: "heinous" | "serious" | "minor" | null;
+}
+
+async function getJSON<T>(path: string, revalidate = 3600): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, { next: { revalidate } });
+  if (!res.ok) throw new Error(`API ${res.status} for ${path}`);
+  return res.json();
+}
+
 export async function getPersonResume(id: number): Promise<PersonResume | null> {
   const res = await fetch(`${API_BASE}/persons/${id}`, { next: { revalidate: 3600 } });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`API ${res.status}`);
   return res.json();
+}
+
+export function listPersons(limit = 60, offset = 0): Promise<PersonSummary[]> {
+  return getJSON<PersonSummary[]>(`/persons?limit=${limit}&offset=${offset}`);
+}
+
+export function searchPersons(q: string): Promise<PersonSummary[]> {
+  return getJSON<PersonSummary[]>(`/search?q=${encodeURIComponent(q)}`, 0);
 }

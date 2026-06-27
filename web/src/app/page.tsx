@@ -1,20 +1,94 @@
-export default function Home() {
+import Link from "next/link";
+import { SiteHeader } from "@/components/SiteHeader";
+import { SearchBox } from "@/components/SearchBox";
+import { listPersons } from "@/lib/api";
+
+export const dynamic = "force-dynamic";
+
+const FEATURES = [
+  { icon: "₹", title: "Wealth declared", body: "Assets, liabilities and income from the candidate's own ECI affidavits — every cycle, side by side." },
+  { icon: "§", title: "Cases pending", body: "Criminal cases with IPC/BNS sections and a severity tier. Always pending-vs-convicted; never a verdict." },
+  { icon: "⇄", title: "Parties switched", body: "Every party held over a career, with when each stint began and ended — by the public record." },
+  { icon: "⌂", title: "Offices held", body: "The full posting history across the Lok Sabha, Rajya Sabha and state legislatures, over time." },
+];
+
+export default async function Home() {
+  let people: Awaited<ReturnType<typeof listPersons>> = [];
+  try {
+    people = await listPersons(500);
+  } catch {
+    /* API not up yet — render the page without live stats */
+  }
+  const total = people.length;
+  const withCases = people.filter((p) => p.total_cases > 0).length;
+  const crorepatis = people.filter((p) => (p.net_assets ?? 0) >= 1_00_00_000).length;
+
+  const stats = [
+    { num: total ? total.toLocaleString("en-IN") : "—", label: "Legislators on file (growing)" },
+    { num: withCases ? withCases.toLocaleString("en-IN") : "—", label: "With declared criminal cases" },
+    { num: crorepatis ? crorepatis.toLocaleString("en-IN") : "—", label: "Declaring assets over ₹1 crore" },
+    { num: "100%", label: "Sourced to public records" },
+  ];
+
   return (
-    <main>
-      <h1>Neta-Resume</h1>
-      <p>
-        Structured, source-linked resumes for members of the Lok Sabha, Rajya Sabha, and (later) every
-        state legislature in India — office history, party switches, ECI affidavit wealth, and criminal
-        cases with severity.
-      </p>
-      <p style={{ color: "#666" }}>
-        Phase 0 scaffold. Search and the person page land in Phase 1. See{" "}
-        <code>person/[id]</code> for the resume render target.
-      </p>
-      <p style={{ fontSize: "0.85rem", color: "#999" }}>
-        Non-commercial / hobby project. Criminal cases shown are mostly pending/alleged; status and the
-        source are always displayed. Data via ECI affidavits, MyNeta/ADR, Digital Sansad, TCPD and others.
-      </p>
-    </main>
+    <>
+      <SiteHeader />
+
+      {/* hero */}
+      <section style={{ position: "relative", padding: "72px 48px 56px", overflow: "hidden", borderBottom: "1px solid var(--rule)" }}>
+        <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(var(--gridline) 1px,transparent 1px)", backgroundSize: "100% 34px", opacity: 0.5, pointerEvents: "none" }} />
+        <div style={{ position: "relative", maxWidth: 720, margin: "0 auto" }}>
+          <div className="mono fadeUp" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 11, letterSpacing: "0.1em", color: "var(--accent)", marginBottom: 22 }}>
+            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--ok)", animation: "nrPulse 2s infinite" }} />
+            UPDATED AFTER EVERY ELECTION &amp; AFFIDAVIT
+          </div>
+          <h1 className="serif fadeUp" style={{ fontSize: 62, fontWeight: 500, lineHeight: 1, letterSpacing: "-0.025em", margin: "0 0 22px", textWrap: "balance" }}>
+            Know exactly who represents you.
+          </h1>
+          <p className="fadeUp" style={{ fontSize: 18, lineHeight: 1.55, color: "var(--ink2)", margin: "0 0 30px", maxWidth: "54ch" }}>
+            The full public record of every legislator in India — wealth declared, cases pending, parties switched —
+            sourced to the Election Commission and shown without spin.
+          </p>
+          <div className="fadeUp" style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "stretch" }}>
+            <div style={{ minWidth: 320, maxWidth: 440, flex: 1, display: "flex" }}>
+              <SearchBox big placeholder="Search by name, constituency or party…" />
+            </div>
+            <Link href="/directory" className="btnDark" style={{ display: "inline-flex", alignItems: "center", fontFamily: "'Archivo',sans-serif", fontSize: 14.5, fontWeight: 600, padding: "13px 24px", borderRadius: 10, border: "none", background: "var(--btn-bg)", color: "var(--btn-fg)", cursor: "pointer", textDecoration: "none" }}>
+              View all{total ? ` ${total}` : ""} →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* stats strip */}
+      <section style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", borderBottom: "1px solid var(--rule)", maxWidth: 1080, margin: "0 auto", width: "100%" }}>
+        {stats.map((s, i) => (
+          <div key={i} style={{ padding: "22px 26px", borderRight: i < 3 ? "1px solid var(--rule)" : "none" }}>
+            <div className="mono" style={{ fontSize: 28, fontWeight: 500, letterSpacing: "-0.02em" }}>{s.num}</div>
+            <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 6 }}>{s.label}</div>
+          </div>
+        ))}
+      </section>
+
+      {/* features */}
+      <section style={{ padding: "44px 48px 72px", maxWidth: 1080, margin: "0 auto", width: "100%" }}>
+        <div className="mono" style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--faint)", marginBottom: 24 }}>
+          What every file tells you
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 16 }}>
+          {FEATURES.map((f) => (
+            <div key={f.title} className="liftsm" style={{ display: "flex", gap: 16, border: "1px solid var(--rule)", borderRadius: 12, background: "var(--card2)", padding: 24 }}>
+              <div className="serif" style={{ width: 44, height: 44, borderRadius: 10, flexShrink: 0, background: "var(--accent-soft)", color: "var(--accent-soft-fg)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 600 }}>
+                {f.icon}
+              </div>
+              <div>
+                <div className="serif" style={{ fontSize: 18, fontWeight: 600, lineHeight: 1.2 }}>{f.title}</div>
+                <div style={{ fontSize: 13.5, color: "var(--muted)", lineHeight: 1.5, marginTop: 7 }}>{f.body}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </>
   );
 }

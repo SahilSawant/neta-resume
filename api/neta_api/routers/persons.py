@@ -10,10 +10,20 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from neta_api.deps import get_db
-from neta_api.schemas import PersonResume
+from neta_api.schemas import PersonResume, PersonSummary
 from neta_api.services import resume as resume_service
 
 router = APIRouter(prefix="/persons", tags=["persons"])
+
+
+@router.get("", response_model=list[PersonSummary])
+def list_persons(
+    limit: int = 60,
+    offset: int = 0,
+    db: Session = Depends(get_db),
+) -> list[PersonSummary]:
+    """Browse all legislators (directory). Ordered by declared assets desc."""
+    return resume_service.list_persons(db, limit=limit, offset=offset)
 
 
 @router.get("/{person_id}", response_model=PersonResume)

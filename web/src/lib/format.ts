@@ -1,0 +1,50 @@
+// Display helpers shared across the resume UI.
+
+/** Integer rupees -> Indian short form (₹3.09 Cr / ₹29.02 L / ₹45,540). */
+export function rupees(n: number | null | undefined): string {
+  if (n == null) return "—";
+  if (n >= 1_00_00_000) return `₹${(n / 1_00_00_000).toFixed(2)} Cr`;
+  if (n >= 1_00_000) return `₹${(n / 1_00_000).toFixed(2)} L`;
+  return `₹${n.toLocaleString("en-IN")}`;
+}
+
+export type Severity = "heinous" | "serious" | "minor" | null | undefined;
+
+export interface SeverityMeta {
+  label: string;
+  fg: string; // css var
+  bg: string;
+  bd: string;
+}
+
+/** Map a derived severity to the design's sev1/sev2/sev3 tokens. */
+export function severityMeta(sev: Severity): SeverityMeta {
+  switch (sev) {
+    case "heinous":
+      return { label: "HEINOUS", fg: "var(--sev1)", bg: "var(--sev1-bg)", bd: "var(--sev1-bd)" };
+    case "serious":
+      return { label: "SERIOUS", fg: "var(--sev2)", bg: "var(--sev2-bg)", bd: "var(--sev2-bd)" };
+    case "minor":
+      return { label: "MINOR", fg: "var(--sev3)", bg: "var(--sev3-bg)", bd: "var(--sev3-bg)" };
+    default:
+      return { label: "UNCLASSIFIED", fg: "var(--muted)", bg: "var(--sunken)", bd: "var(--border2)" };
+  }
+}
+
+/** The single colour used for a person's "cases" signal in lists. */
+export function caseSignalColor(topSeverity: Severity, total: number): string {
+  if (total === 0) return "var(--ok)";
+  return severityMeta(topSeverity).fg;
+}
+
+export function year(dateStr: string | null | undefined): string {
+  if (!dateStr) return "—";
+  return dateStr.slice(0, 4);
+}
+
+export function pretty(dateStr: string | null | undefined): string {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString("en-IN", { year: "numeric", month: "short" });
+}

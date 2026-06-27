@@ -76,3 +76,7 @@ class PersonSummary(BaseModel):
     current_party: str | None
     current_house: str | None
     constituency: str | None
+    net_assets: int | None = None          # latest declared total assets (rupees)
+    pending_cases: int = 0                  # count of non-convicted cases
+    total_cases: int = 0
+    top_severity: str | None = None         # worst severity across cases (heinous>serious>minor)

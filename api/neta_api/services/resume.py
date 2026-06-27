@@ -166,39 +166,72 @@ def build_resume(db: Session, person_id: int) -> PersonResume | None:
     )
 
 
-def search_persons(db: Session, q: str) -> list[PersonSummary]:
-    rows = db.execute(
-        text(
-            """
-            SELECT p.id, p.display_name,
-                   pt.canonical_name AS current_party,
-                   h.name AS current_house,
-                   ot.constituency
-            FROM person p
-            LEFT JOIN LATERAL (
-                SELECT party_id, source_ref_id FROM party_affiliation
-                WHERE person_id = p.id AND is_current LIMIT 1
-            ) cur ON true
-            LEFT JOIN party pt ON pt.id = cur.party_id
-            LEFT JOIN LATERAL (
-                SELECT house_id, constituency FROM office_term
-                WHERE person_id = p.id ORDER BY term_cycle_id DESC LIMIT 1
-            ) ot ON true
-            LEFT JOIN house h ON h.id = ot.house_id
-            WHERE p.normalized_name % :q OR p.display_name ILIKE '%' || :q || '%'
-            ORDER BY similarity(p.normalized_name, :q) DESC
-            LIMIT 25
-            """
-        ),
-        {"q": q},
+# Shared summary projection: per person, current party + house/constituency, latest assets,
+# case counts, and worst severity. `{where}` and `{order}` are filled by list/search.
+_SUMMARY_SQL = """
+    SELECT p.id, p.display_name,
+           cur.party       AS current_party,
+           oh.house        AS current_house,
+           oh.constituency AS constituency,
+           w.total_assets  AS net_assets,
+           COALESCE(cc.total, 0)   AS total_cases,
+           COALESCE(cc.pending, 0) AS pending_cases,
+           sev.severity    AS top_severity
+    FROM person p
+    LEFT JOIN LATERAL (
+        SELECT pt.canonical_name AS party
+        FROM party_affiliation pa JOIN party pt ON pt.id = pa.party_id
+        WHERE pa.person_id = p.id AND pa.is_current LIMIT 1
+    ) cur ON true
+    LEFT JOIN LATERAL (
+        SELECT h.name AS house, ot.constituency
+        FROM office_term ot JOIN house h ON h.id = ot.house_id
+        WHERE ot.person_id = p.id ORDER BY ot.term_cycle_id DESC LIMIT 1
+    ) oh ON true
+    LEFT JOIN LATERAL (
+        SELECT total_assets FROM affidavit
+        WHERE person_id = p.id ORDER BY filed_year DESC LIMIT 1
+    ) w ON true
+    LEFT JOIN LATERAL (
+        SELECT count(*) AS total, count(*) FILTER (WHERE NOT is_convicted) AS pending
+        FROM criminal_case WHERE person_id = p.id
+    ) cc ON true
+    LEFT JOIN LATERAL (
+        SELECT severity FROM criminal_case
+        WHERE person_id = p.id AND severity IS NOT NULL
+        ORDER BY CASE severity WHEN 'heinous' THEN 1 WHEN 'serious' THEN 2 WHEN 'minor' THEN 3 ELSE 4 END
+        LIMIT 1
+    ) sev ON true
+    {where}
+    {order}
+    LIMIT :limit OFFSET :offset
+"""
+
+
+def _to_summary(r) -> PersonSummary:
+    return PersonSummary(
+        id=r.id,
+        display_name=r.display_name,
+        current_party=r.current_party,
+        current_house=r.current_house,
+        constituency=r.constituency,
+        net_assets=r.net_assets,
+        pending_cases=r.pending_cases,
+        total_cases=r.total_cases,
+        top_severity=r.top_severity,
     )
-    return [
-        PersonSummary(
-            id=r.id,
-            display_name=r.display_name,
-            current_party=r.current_party,
-            current_house=r.current_house,
-            constituency=r.constituency,
-        )
-        for r in rows
-    ]
+
+
+def list_persons(db: Session, limit: int = 60, offset: int = 0) -> list[PersonSummary]:
+    sql = _SUMMARY_SQL.format(where="", order="ORDER BY w.total_assets DESC NULLS LAST, p.display_name")
+    rows = db.execute(text(sql), {"limit": limit, "offset": offset})
+    return [_to_summary(r) for r in rows]
+
+
+def search_persons(db: Session, q: str, limit: int = 25) -> list[PersonSummary]:
+    sql = _SUMMARY_SQL.format(
+        where="WHERE p.normalized_name % :q OR p.display_name ILIKE '%' || :q || '%'",
+        order="ORDER BY similarity(p.normalized_name, :q) DESC",
+    )
+    rows = db.execute(text(sql), {"q": q, "limit": limit, "offset": 0})
+    return [_to_summary(r) for r in rows]

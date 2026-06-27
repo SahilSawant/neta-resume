@@ -1,22 +1,29 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Neta-Resume",
-  description: "Public-record resumes for Indian legislators. Every fact carries its source.",
+  title: "Neta·Resume — the public record of every Indian legislator",
+  description:
+    "Offices held, parties switched, wealth declared, and cases pending — sourced to the Election Commission and shown without spin.",
 };
+
+// Apply the saved theme before paint to avoid a flash of the wrong theme.
+const themeInit = `(function(){try{var t=localStorage.getItem('nr-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body style={{ fontFamily: "system-ui, sans-serif", maxWidth: 880, margin: "0 auto", padding: 24 }}>
-        <header style={{ borderBottom: "1px solid #eee", paddingBottom: 12, marginBottom: 24 }}>
-          <a href="/" style={{ fontWeight: 700, fontSize: "1.25rem", textDecoration: "none", color: "#111" }}>
-            Neta-Resume
-          </a>
-        </header>
-        {children}
-      </body>
+    <html lang="en" data-theme="light" suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Mukta:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+        <script dangerouslySetInnerHTML={{ __html: themeInit }} />
+      </head>
+      <body className="scroll">{children}</body>
     </html>
   );
 }

@@ -1,113 +1,123 @@
-// The resume page — the Phase 1 vertical-slice render target.
-// Server component: fetches from FastAPI server-side and renders a SourceBadge on every fact.
-
 import { notFound } from "next/navigation";
-import { getPersonResume } from "@/lib/api";
-import { SourceBadge } from "@/components/SourceBadge";
+import Link from "next/link";
+import { getPersonResume, type PersonResume } from "@/lib/api";
+import { rupees } from "@/lib/format";
+import { SiteHeader } from "@/components/SiteHeader";
+import { Frame, PhotoBox, PartyPill } from "@/components/ui";
+import { ProfileTabs } from "@/components/resume/ProfileTabs";
 
-function rupees(n: number): string {
-  // Indian grouping + crore/lakh shorthand.
-  if (n >= 1_00_00_000) return `₹${(n / 1_00_00_000).toFixed(2)} Cr`;
-  if (n >= 1_00_000) return `₹${(n / 1_00_000).toFixed(2)} L`;
-  return `₹${n.toLocaleString("en-IN")}`;
-}
-
-const SEVERITY_COLOR: Record<string, string> = {
-  heinous: "#b00020",
-  serious: "#d97706",
-  minor: "#666",
-};
+export const dynamic = "force-dynamic";
 
 export default async function PersonPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const resume = await getPersonResume(Number(id));
   if (!resume) notFound();
 
+  const lead = resume.office_terms[0];
+  const latestAssets = [...resume.wealth].sort((a, b) => b.filed_year - a.filed_year)[0];
+  const pending = resume.criminal_cases.filter((c) => !c.is_convicted).length;
+  const convictions = resume.criminal_cases.filter((c) => c.is_convicted).length;
+  const parties = new Set([
+    ...resume.party_history.map((p) => p.party),
+    ...resume.office_terms.map((o) => o.party).filter(Boolean),
+  ]);
+  const currentParty =
+    resume.party_history.find((p) => p.is_current)?.party ?? lead?.party ?? null;
+
+  const metrics = [
+    { label: "Declared net assets", src: latestAssets ? `ECI · ${latestAssets.election_cycle}` : "—", value: rupees(latestAssets?.total_assets ?? null), color: "var(--ink)", dot: "" },
+    { label: "Pending criminal cases", src: "ECI AFFIDAVIT", value: String(pending), color: pending ? "var(--sev2)" : "var(--ok)", dot: pending ? "var(--sev2)" : "var(--ok)" },
+    { label: "Convictions on record", src: "COURT / AFFIDAVIT", value: String(convictions), color: convictions ? "var(--sev1)" : "var(--ink)", dot: "" },
+    { label: "Party labels held", src: "PUBLIC RECORD", value: String(parties.size), color: "var(--ink)", dot: "" },
+  ];
+
+  const url = `neta-resume.in / mp / ${slug(resume.display_name)}`;
+
   return (
-    <main>
-      <h1>{resume.display_name}</h1>
+    <>
+      <SiteHeader />
+      <main style={{ maxWidth: 1080, margin: "0 auto", padding: "28px 28px 72px", width: "100%" }}>
+        <Link href="/directory" className="navlink mono" style={{ fontSize: 11, color: "var(--muted)", textDecoration: "none", display: "inline-block", marginBottom: 16 }}>
+          ← Directory
+        </Link>
 
-      <section>
-        <h2>Office history</h2>
-        {resume.office_terms.length === 0 && <p style={{ color: "#999" }}>No terms recorded yet.</p>}
-        <ul>
-          {resume.office_terms.map((t, i) => (
-            <li key={i}>
-              {t.house} ({t.cycle_number}) — {t.constituency ?? t.party ?? "—"} · {t.status}
-              <SourceBadge source={t.source} />
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section>
-        <h2>Party history</h2>
-        <ul>
-          {resume.party_history.map((p, i) => (
-            <li key={i}>
-              <strong>{p.party}</strong>
-              {p.joined_date ? ` · joined ${p.joined_date}` : ""}
-              {p.left_date ? ` · left ${p.left_date}` : p.is_current ? " · current" : ""}
-              {p.join_reason && (
-                <div style={{ fontSize: "0.85rem", color: "#555" }}>
-                  Joined (reported): {p.join_reason} <SourceBadge source={p.reason_source} />
+        <Frame url={url}>
+          {/* editorial hero */}
+          <div style={{ display: "grid", gridTemplateColumns: "1.55fr 1fr", borderBottom: "1px solid var(--rule)" }}>
+            <div style={{ minWidth: 0, padding: "38px 40px", borderRight: "1px solid var(--rule)" }}>
+              <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
+                <PhotoBox w={108} h={128} label="OFFICIAL PHOTO" />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="mono" style={{ fontSize: 10, letterSpacing: "0.12em", color: "var(--accent)", marginBottom: 10 }}>
+                    FILE · {lead ? `${lead.house.replace(/[^A-Z]/g, "") || "LS"}-${lead.cycle_number}` : "—"} · #{resume.id}
+                  </div>
+                  <h1 className="serif" style={{ fontSize: 42, fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1, margin: 0 }}>
+                    {resume.display_name}
+                  </h1>
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 9, marginTop: 16 }}>
+                    <PartyPill party={currentParty} />
+                    {lead && <Meta>{lead.membership_type === "nominated" ? "Nominated" : "MP"} · {lead.house}</Meta>}
+                    {lead?.constituency && <><Sep /><Meta>{lead.constituency}</Meta></>}
+                    <Sep />
+                    <Meta>{resume.office_terms.length} term{resume.office_terms.length === 1 ? "" : "s"} on file</Meta>
+                  </div>
                 </div>
-              )}
-              {p.leave_reason && (
-                <div style={{ fontSize: "0.85rem", color: "#555" }}>
-                  Left (reported): {p.leave_reason} <SourceBadge source={p.reason_source} />
+              </div>
+              <p className="serif" style={{ fontSize: 18, lineHeight: 1.55, color: "var(--ink2)", margin: "24px 0 0", maxWidth: "62ch" }}>
+                {summary(resume, latestAssets?.total_assets ?? null, pending, convictions, parties.size)}
+              </p>
+            </div>
+
+            {/* hero metrics */}
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {metrics.map((m, i) => (
+                <div key={i} style={{ flex: 1, padding: "18px 26px", borderBottom: i < metrics.length - 1 ? "1px solid var(--rule)" : "none", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                  <div>
+                    <div style={{ fontSize: 11.5, color: "var(--muted)" }}>{m.label}</div>
+                    <div className="mono" style={{ fontSize: 9, color: "var(--faint)", letterSpacing: "0.06em", marginTop: 4 }}>{m.src}</div>
+                  </div>
+                  <div className="mono" style={{ fontSize: 24, fontWeight: 500, letterSpacing: "-0.02em", color: m.color, display: "flex", alignItems: "center", gap: 8 }}>
+                    {m.dot && <span style={{ width: 9, height: 9, borderRadius: 3, background: m.dot }} />}
+                    {m.value}
+                  </div>
                 </div>
-              )}
-              <SourceBadge source={p.source} />
-            </li>
-          ))}
-        </ul>
-      </section>
+              ))}
+            </div>
+          </div>
 
-      <section>
-        <h2>Declared wealth (ECI affidavits)</h2>
-        <table style={{ borderCollapse: "collapse", width: "100%" }}>
-          <thead>
-            <tr style={{ textAlign: "left", borderBottom: "1px solid #ddd" }}>
-              <th>Cycle</th>
-              <th>Assets</th>
-              <th>Liabilities</th>
-              <th>Income</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {resume.wealth.map((w, i) => (
-              <tr key={i} style={{ borderBottom: "1px solid #f3f3f3" }}>
-                <td>{w.election_cycle}</td>
-                <td>{rupees(w.total_assets)}</td>
-                <td>{rupees(w.total_liabilities)}</td>
-                <td>{w.self_income != null ? rupees(w.self_income) : "—"}</td>
-                <td><SourceBadge source={w.source} /></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
+          <ProfileTabs resume={resume} />
+        </Frame>
 
-      <section>
-        <h2>Criminal cases</h2>
-        <p style={{ fontSize: "0.8rem", color: "#999" }}>
-          Mostly pending/alleged — status shown per case; no assertion of guilt.
-        </p>
-        <ul>
-          {resume.criminal_cases.map((c, i) => (
-            <li key={i}>
-              <span style={{ color: SEVERITY_COLOR[c.severity ?? "minor"], fontWeight: 600 }}>
-                {(c.severity ?? "unclassified").toUpperCase()}
-              </span>{" "}
-              — {c.sections.join(", ")} · <em>{c.status}</em>
-              {c.filed_year ? ` (${c.filed_year})` : ""}
-              <SourceBadge source={c.source} />
-            </li>
-          ))}
-        </ul>
-      </section>
-    </main>
+        <div style={{ display: "flex", gap: 9, alignItems: "flex-start", fontSize: 11.5, color: "var(--muted)", lineHeight: 1.5, marginTop: 20, maxWidth: "80ch" }}>
+          <span className="mono" style={{ color: "var(--accent)", flexShrink: 0 }}>i</span>
+          <span>
+            Criminal cases are as declared in the candidate's own ECI affidavit and are mostly <strong style={{ color: "var(--ink2)" }}>pending and unproven</strong>.
+            This file asserts no guilt. Every figure links to its source.
+          </span>
+        </div>
+      </main>
+    </>
   );
+}
+
+function summary(r: PersonResume, assets: number | null, pending: number, convictions: number, nParties: number): string {
+  const seat = r.office_terms[0]?.constituency;
+  const bits: string[] = [];
+  bits.push(`${r.display_name} ${seat ? `represents ${seat}` : "is on the public record"}.`);
+  if (assets != null) bits.push(`Declared assets stand at ${rupees(assets)}.`);
+  if (r.criminal_cases.length === 0) bits.push("No criminal cases are declared.");
+  else bits.push(`${r.criminal_cases.length} criminal case${r.criminal_cases.length === 1 ? "" : "s"} ${pending ? `(${pending} pending` : ""}${convictions ? `, ${convictions} convicted)` : pending ? ")" : ""} appear on the affidavit.`);
+  bits.push(`${nParties} party label${nParties === 1 ? "" : "s"} on file.`);
+  return bits.join(" ");
+}
+
+function slug(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+function Meta({ children }: { children: React.ReactNode }) {
+  return <span style={{ fontSize: 13, color: "var(--ink2)" }}>{children}</span>;
+}
+function Sep() {
+  return <span style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--border2)" }} />;
 }
