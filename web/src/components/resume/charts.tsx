@@ -19,8 +19,19 @@ export function Donut({
   size?: number;
 }) {
   const r = 54;
+  const strokeW = 18;
   const circ = 2 * Math.PI * r;
   const total = segments.reduce((s, x) => s + x.value, 0) || 1;
+
+  // Fit the centre number to the donut hole so long values (e.g. "4568.22 Cr") never
+  // overflow and collide with the ring. innerD = hole diameter in px; mono glyphs ≈ 0.62em.
+  const innerD = (size * (r - strokeW / 2) * 2) / 140;
+  const numStr = String(centerNum).trim();
+  const [mainTok, ...rest] = numStr.split(/\s+/);
+  const unitTok = rest.join(" ");
+  const weightedLen = mainTok.length + (unitTok ? unitTok.length * 0.55 + 0.6 : 0);
+  const mainSize = Math.max(13, Math.min(26, (innerD * 0.86) / (Math.max(weightedLen, 1) * 0.62)));
+  const unitSize = Math.max(9, mainSize * 0.55);
   let offset = 0;
   const arcs = segments
     .filter((s) => s.value > 0)
@@ -36,16 +47,19 @@ export function Donut({
     <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
       <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
         <svg viewBox="0 0 140 140" style={{ width: size, height: size }}>
-          <circle cx="70" cy="70" r={r} fill="none" stroke="var(--rule2)" strokeWidth="18" />
+          <circle cx="70" cy="70" r={r} fill="none" stroke="var(--rule2)" strokeWidth={strokeW} />
           <g style={{ transformOrigin: "70px 70px", transform: "rotate(-90deg)" }}>
             {arcs.map((a, i) => (
-              <circle key={i} cx="70" cy="70" r={r} fill="none" stroke={a.color} strokeWidth="18" strokeDasharray={a.dash} strokeDashoffset={a.off} />
+              <circle key={i} cx="70" cy="70" r={r} fill="none" stroke={a.color} strokeWidth={strokeW} strokeDasharray={a.dash} strokeDashoffset={a.off} />
             ))}
           </g>
         </svg>
-        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-          <div className="mono" style={{ fontSize: 26, fontWeight: 600, lineHeight: 1 }}>{centerNum}</div>
-          <div style={{ fontSize: 9.5, color: "var(--muted)", marginTop: 2 }}>{centerLabel}</div>
+        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 3, maxWidth: innerD, lineHeight: 1, whiteSpace: "nowrap" }}>
+            <span className="mono" style={{ fontSize: mainSize, fontWeight: 600 }}>{mainTok}</span>
+            {unitTok && <span className="mono" style={{ fontSize: unitSize, fontWeight: 600, color: "var(--muted)" }}>{unitTok}</span>}
+          </div>
+          <div style={{ fontSize: 9.5, color: "var(--muted)", marginTop: 3, whiteSpace: "nowrap" }}>{centerLabel}</div>
         </div>
       </div>
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 9 }}>
