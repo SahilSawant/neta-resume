@@ -44,11 +44,29 @@ def _persist(s, m: sansad.RsMember, *, source_id: int, house_id: int, term_cycle
             RETURNING id, person_id
             """
         ),
-        {"sid": source_id, "nid": m.member_id, "url": m.profile_url, "name": m.name},
+        {"sid": source_id, "nid": f"rs-{m.member_id}", "url": m.profile_url, "name": m.name},
     ).one()
     source_ref_id, person_id = row.id, row.person_id
 
     birth_year = (2026 - m.age) if m.age else None
+    if person_id is None:
+        # repair: relink to an existing orphaned RS roster person of the same name (no source_ref)
+        person_id = s.execute(
+            text(
+                """
+                SELECT p.id FROM person p
+                JOIN office_term ot ON ot.person_id = p.id
+                JOIN term_cycle tc ON tc.id = ot.term_cycle_id JOIN house h ON h.id = tc.house_id
+                WHERE h.code='RS' AND p.normalized_name = :nn
+                  AND NOT EXISTS (SELECT 1 FROM source_ref sr WHERE sr.person_id = p.id)
+                LIMIT 1
+                """
+            ),
+            {"nn": normalize_name(m.name)},
+        ).scalar()
+        if person_id is not None:
+            s.execute(text("UPDATE source_ref SET person_id = :pid WHERE id = :sid"),
+                      {"pid": person_id, "sid": source_ref_id})
     if person_id is None:
         person_id = s.execute(
             text(

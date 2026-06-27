@@ -70,7 +70,7 @@ def _record_sansad_ref(s, source_id: int, m: sansad.LsMember, person_id: int) ->
               SET native_url = EXCLUDED.native_url, person_id = EXCLUDED.person_id
             """
         ),
-        {"sid": source_id, "nid": m.member_id, "url": m.profile_url, "name": m.name, "pid": person_id},
+        {"sid": source_id, "nid": f"ls-{m.member_id}", "url": m.profile_url, "name": m.name, "pid": person_id},
     )
 
 
@@ -84,7 +84,7 @@ def _create_member(s, m: sansad.LsMember, *, source_id: int, house_id: int, term
             RETURNING id
             """
         ),
-        {"sid": source_id, "nid": m.member_id, "url": m.profile_url, "name": m.name},
+        {"sid": source_id, "nid": f"ls-{m.member_id}", "url": m.profile_url, "name": m.name},
     ).scalar()
     birth_year = (2024 - m.age) if m.age else None
     person_id = s.execute(

@@ -10,6 +10,8 @@ Raw HTML is cached via provenance.cache_raw so every fact has a snapshot it was 
 
 from __future__ import annotations
 
+import re
+
 from neta_ingest.http import client as http
 from neta_ingest.provenance import cache_raw
 from neta_ingest.sources.myneta.parser import (
@@ -52,3 +54,35 @@ def fetch_candidate(candidate_id: str, cycle: str = "LS2024") -> tuple[ParsedCan
 
 def candidate_url(candidate_id: str, cycle: str = "LS2024") -> str:
     return f"{base_url(cycle)}/candidate.php?candidate_id={candidate_id}"
+
+
+def _norm_const(name: str) -> str:
+    """Normalize a constituency name for matching: strip (SC)/(ST) etc., uppercase, collapse spaces."""
+    name = re.sub(r"\([^)]*\)", " ", name)
+    return re.sub(r"\s+", " ", name).strip().upper()
+
+
+def fetch_constituency_map(cycle: str = "LS2024") -> dict[str, str]:
+    """Map normalized constituency name -> MyNeta constituency_id (from the election index page)."""
+    resp = http.get(f"{base_url(cycle)}/")
+    out: dict[str, str] = {}
+    for m in re.finditer(
+        r'href=["\']?[^"\'>]*action=show_candidates&constituency_id=(\d+)[^"\'>]*["\']?[^>]*>(.*?)</a>',
+        resp.text, re.S,
+    ):
+        cid = m.group(1)
+        name = _norm_const(re.sub(r"<[^>]+>", " ", m.group(2)))
+        if name and name not in out:
+            out[name] = cid
+    return out
+
+
+def fetch_constituency_candidates(constituency_id: str, cycle: str = "LS2024") -> list[tuple[str, str]]:
+    """Return [(candidate_id, name), ...] for every candidate in a constituency."""
+    resp = http.get(f"{base_url(cycle)}/index.php?action=show_candidates&constituency_id={constituency_id}")
+    seen: dict[str, str] = {}
+    for m in re.finditer(r'candidate\.php\?candidate_id=(\d+)[^>]*>([^<]+)', resp.text):
+        cid, name = m.group(1), re.sub(r"\s+", " ", m.group(2)).strip()
+        if name and not name.isdigit():
+            seen[cid] = name
+    return list(seen.items())

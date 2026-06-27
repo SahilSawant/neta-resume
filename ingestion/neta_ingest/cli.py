@@ -59,6 +59,14 @@ def resolve() -> None:
     p.run()
 
 
+@app.command(name="enrich-missing")
+def enrich_missing() -> None:
+    """Backfill affidavit data for LS members MyNeta omitted from its winners list (per-constituency)."""
+    from neta_ingest.pipelines import enrich_missing_affidavits as p
+
+    p.run()
+
+
 @app.command(name="ls-roster")
 def ls_roster() -> None:
     """Complete the Lok Sabha roster + official photos from sansad.in (fill + add missing members)."""

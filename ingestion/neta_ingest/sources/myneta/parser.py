@@ -115,16 +115,16 @@ def parse_candidate(html: str, candidate_id: str | None = None) -> ParsedCandida
         party = mp.group(1).strip() or None
 
     # Constituency + state from header: "NAME (Winner) ADILABAD (ST) (TELANGANA) Party:"
+    # The constituency is the text before the FIRST parenthesis (robust to nested parens like
+    # "NORTH WEST DELHI (SC) (DELHI (NCT))"); the last parenthesised group is the state.
     constituency = state = None
     mc = re.search(r"\(Winner\)\s*(.*?)\s*Party:", text) or re.search(r"\(Candidate\)\s*(.*?)\s*Party:", text)
     if mc:
         seat = mc.group(1).strip()
-        ms = re.search(r"^(.*?)\(([^()]+)\)\s*$", seat)
-        if ms:
-            constituency = re.sub(r"\([^)]*\)", "", ms.group(1)).strip() or ms.group(1).strip()
-            state = ms.group(2).strip()
-        else:
-            constituency = seat
+        constituency = re.sub(r"\s*\(.*$", "", seat).strip() or seat
+        state_groups = re.findall(r"\(([^()]+)\)", seat)
+        if state_groups:
+            state = state_groups[-1].strip()
 
     age = None
     ma = re.search(r"Age:\s*(\d+)", text)
