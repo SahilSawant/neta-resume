@@ -28,6 +28,16 @@ def test_assets_parsed_to_integer_rupees():
     assert c.total_liabilities == 2901575   # Rs 29,01,575
 
 
+def test_asset_breakdown_and_income():
+    c = _candidate()
+    assert c.movable_assets == 5024833       # Rs 50,24,833
+    assert c.immovable_assets == 25892000    # Rs 2,58,92,000
+    # movable + immovable should reconcile to the declared total
+    assert c.movable_assets + c.immovable_assets == c.total_assets
+    assert c.self_income == 1077415          # latest ITR (2022-23): Rs 10,77,415
+    assert c.income_year == 2022
+
+
 def test_criminal_case_extracted():
     c = _candidate()
     assert len(c.criminal_cases) == 1

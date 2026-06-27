@@ -77,6 +77,7 @@ def _persist_candidate(s, c: ParsedCandidate, *, cycle: str, house: str, raw_rel
     source_ref_id, person_id = row.id, row.person_id
 
     # 2) person (create if this source_ref isn't linked yet)
+    birth_year = (filed_year - c.age) if (filed_year and c.age) else None
     if person_id is None:
         person_id = _scalar(
             s,
@@ -84,7 +85,7 @@ def _persist_candidate(s, c: ParsedCandidate, *, cycle: str, house: str, raw_rel
             INSERT INTO person (display_name, normalized_name, birth_year)
             VALUES (:dn, :nn, :by) RETURNING id
             """,
-            dn=c.name, nn=normalize_name(c.name), by=None,
+            dn=c.name, nn=normalize_name(c.name), by=birth_year,
         )
         s.execute(
             text("UPDATE source_ref SET person_id = :pid WHERE id = :sid"),
@@ -144,12 +145,16 @@ def _persist_candidate(s, c: ParsedCandidate, *, cycle: str, house: str, raw_rel
         """
         INSERT INTO affidavit
           (person_id, source_ref_id, election_cycle, house_id, filed_year, age, education,
-           total_assets, total_liabilities, raw_url)
-        VALUES (:pid, :sr, :cycle, :hid, :fy, :age, :edu, :assets, :liab, :url)
+           total_assets, total_liabilities, movable_assets, immovable_assets,
+           self_income, income_year, raw_url)
+        VALUES (:pid, :sr, :cycle, :hid, :fy, :age, :edu, :assets, :liab, :mov, :immov,
+                :income, :iyear, :url)
         RETURNING id
         """,
         pid=person_id, sr=source_ref_id, cycle=cycle, hid=house_id, fy=filed_year,
-        age=c.age, edu=c.education, assets=c.total_assets, liab=c.total_liabilities, url=source_url,
+        age=c.age, edu=c.education, assets=c.total_assets, liab=c.total_liabilities,
+        mov=c.movable_assets, immov=c.immovable_assets,
+        income=c.self_income, iyear=c.income_year, url=source_url,
     )
 
     # 7) criminal cases + charges (with derived severity)

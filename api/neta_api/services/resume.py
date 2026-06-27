@@ -98,21 +98,13 @@ def build_resume(db: Session, person_id: int) -> PersonResume | None:
         )
     ]
 
-    wealth = [
-        AffidavitWealth(
-            election_cycle=r.election_cycle,
-            filed_year=r.filed_year,
-            total_assets=r.total_assets,
-            total_liabilities=r.total_liabilities,
-            self_income=r.self_income,
-            source=_source(r),
-        )
-        for r in db.execute(
+    wealth_rows = list(
+        db.execute(
             text(
                 """
                 SELECT a.election_cycle, a.filed_year, a.total_assets, a.total_liabilities,
-                       a.self_income, s.code AS source_code, s.name AS source_name, s.trust_tier,
-                       sr.native_url
+                       a.movable_assets, a.immovable_assets, a.self_income, a.age, a.education,
+                       s.code AS source_code, s.name AS source_name, s.trust_tier, sr.native_url
                 FROM affidavit a
                 JOIN source_ref sr ON sr.id = a.source_ref_id
                 JOIN source s ON s.id = sr.source_id
@@ -122,7 +114,22 @@ def build_resume(db: Session, person_id: int) -> PersonResume | None:
             ),
             {"pid": person_id},
         )
+    )
+    wealth = [
+        AffidavitWealth(
+            election_cycle=r.election_cycle,
+            filed_year=r.filed_year,
+            total_assets=r.total_assets,
+            total_liabilities=r.total_liabilities,
+            movable_assets=r.movable_assets,
+            immovable_assets=r.immovable_assets,
+            self_income=r.self_income,
+            source=_source(r),
+        )
+        for r in wealth_rows
     ]
+    # Person-level age/education come from the most recent affidavit.
+    latest = wealth_rows[-1] if wealth_rows else None
 
     criminal_cases = [
         CriminalCase(
@@ -159,6 +166,8 @@ def build_resume(db: Session, person_id: int) -> PersonResume | None:
     return PersonResume(
         id=person.id,
         display_name=person.display_name,
+        age=latest.age if latest else None,
+        education=latest.education if latest else None,
         office_terms=office_terms,
         party_history=party_history,
         wealth=wealth,

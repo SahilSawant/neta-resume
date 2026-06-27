@@ -45,7 +45,9 @@ class AffidavitWealth(BaseModel):
     filed_year: int
     total_assets: int            # rupees
     total_liabilities: int
-    self_income: int | None
+    movable_assets: int | None = None
+    immovable_assets: int | None = None
+    self_income: int | None = None
     source: Source
 
 
@@ -64,6 +66,8 @@ class CriminalCase(BaseModel):
 class PersonResume(BaseModel):
     id: int
     display_name: str
+    age: int | None = None
+    education: str | None = None
     office_terms: list[OfficeTerm]
     party_history: list[PartyStint]
     wealth: list[AffidavitWealth]      # ordered by filed_year for YoY

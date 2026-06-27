@@ -60,6 +60,10 @@ class ParsedCandidate:
     education: str | None
     total_assets: int            # integer rupees
     total_liabilities: int
+    movable_assets: int | None = None
+    immovable_assets: int | None = None
+    self_income: int | None = None       # latest declared ITR income (rupees)
+    income_year: int | None = None
     criminal_cases: list[ParsedCase] = field(default_factory=list)
 
 
@@ -141,6 +145,18 @@ def parse_candidate(html: str, candidate_id: str | None = None) -> ParsedCandida
     if ml:
         total_liabilities = parse_rupees(ml.group(1))
 
+    # Movable / immovable totals: the last Rs figure in each detail section is its total
+    # (they sum to total_assets). Sections run from their header to the next section header.
+    movable_assets = _section_total(text, "Details of Movable Assets", "Details of Immovable Assets")
+    immovable_assets = _section_total(text, "Details of Immovable Assets", "Details of Liabilities")
+
+    # Latest declared ITR income: first "self ... Rs N" row after the income-tax header.
+    self_income = income_year = None
+    inc = re.search(r"Total Income Shown in ITR.*?self\s+\w?\s*((?:19|20)\d{2})[^R]*?Rs\s*([0-9,]+)", text)
+    if inc:
+        income_year = int(inc.group(1))
+        self_income = parse_rupees(inc.group(2))
+
     cases = _parse_cases(html)
 
     return ParsedCandidate(
@@ -153,8 +169,23 @@ def parse_candidate(html: str, candidate_id: str | None = None) -> ParsedCandida
         education=education,
         total_assets=total_assets,
         total_liabilities=total_liabilities,
+        movable_assets=movable_assets,
+        immovable_assets=immovable_assets,
+        self_income=self_income,
+        income_year=income_year,
         criminal_cases=cases,
     )
+
+
+def _section_total(text: str, start_label: str, end_label: str) -> int | None:
+    """Return the last Rs figure in a detail section (its totals row), as integer rupees."""
+    i = text.find(start_label)
+    if i < 0:
+        return None
+    j = text.find(end_label, i)
+    seg = text[i : j if j > 0 else i + 4000]
+    rs = re.findall(r"Rs\s*([0-9,]+)", seg)
+    return parse_rupees(rs[-1]) if rs else None
 
 
 def _cell_text(node) -> str:

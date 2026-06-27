@@ -109,12 +109,20 @@ function Overview({ resume }: { resume: PersonResume }) {
 function Wealth({ resume }: { resume: PersonResume }) {
   const rows = [...resume.wealth].sort((a, b) => b.filed_year - a.filed_year);
   const latest = rows[0];
-  const composition = latest
+  // Prefer the real movable/immovable split; fall back to net-worth vs liabilities.
+  const hasSplit = latest && (latest.movable_assets != null || latest.immovable_assets != null);
+  const composition = !latest
+    ? []
+    : hasSplit
     ? [
-        { label: "Net worth", value: Math.max(latest.total_assets - latest.total_liabilities, 0), color: "var(--accent-2)" },
+        { label: "Immovable", value: latest.immovable_assets ?? 0, color: "var(--accent-2)" },
+        { label: "Movable", value: latest.movable_assets ?? 0, color: "var(--accent-3)" },
         { label: "Liabilities", value: latest.total_liabilities, color: "var(--sev2)" },
       ]
-    : [];
+    : [
+        { label: "Net worth", value: Math.max(latest.total_assets - latest.total_liabilities, 0), color: "var(--accent-2)" },
+        { label: "Liabilities", value: latest.total_liabilities, color: "var(--sev2)" },
+      ];
   return (
     <div className="fadeUp" style={{ display: "grid", gridTemplateColumns: "1fr 1.3fr", gap: 18 }}>
       <div style={cardStyle}>

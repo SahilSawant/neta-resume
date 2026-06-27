@@ -58,9 +58,15 @@ export default async function PersonPage({ params }: { params: Promise<{ id: str
                     <PartyPill party={currentParty} />
                     {lead && <Meta>{lead.membership_type === "nominated" ? "Nominated" : "MP"} · {lead.house}</Meta>}
                     {lead?.constituency && <><Sep /><Meta>{lead.constituency}</Meta></>}
+                    {resume.age != null && <><Sep /><Meta>Age {resume.age}</Meta></>}
                     <Sep />
                     <Meta>{resume.office_terms.length} term{resume.office_terms.length === 1 ? "" : "s"} on file</Meta>
                   </div>
+                  {resume.education && (
+                    <div className="mono" style={{ fontSize: 10.5, color: "var(--faint)", letterSpacing: "0.04em", marginTop: 10 }}>
+                      EDUCATION · {resume.education}
+                    </div>
+                  )}
                 </div>
               </div>
               <p className="serif" style={{ fontSize: 18, lineHeight: 1.55, color: "var(--ink2)", margin: "24px 0 0", maxWidth: "62ch" }}>

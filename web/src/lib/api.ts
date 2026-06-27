@@ -38,6 +38,8 @@ export interface AffidavitWealth {
   filed_year: number;
   total_assets: number;
   total_liabilities: number;
+  movable_assets: number | null;
+  immovable_assets: number | null;
   self_income: number | null;
   source: Source;
 }
@@ -57,6 +59,8 @@ export interface CriminalCase {
 export interface PersonResume {
   id: number;
   display_name: string;
+  age: number | null;
+  education: string | null;
   office_terms: OfficeTerm[];
   party_history: PartyStint[];
   wealth: AffidavitWealth[];

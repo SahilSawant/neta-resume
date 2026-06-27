@@ -59,6 +59,14 @@ def resolve() -> None:
     p.run()
 
 
+@app.command(name="merge-cycles")
+def merge_cycles() -> None:
+    """Merge the same person across election cycles (incumbents) and detect party switches."""
+    from neta_ingest.pipelines import merge_cycles as p
+
+    p.run()
+
+
 @app.command(name="party-switch")
 def party_switch() -> None:
     """Diff office_term party across cycles -> party_affiliation + party_switch_event."""
