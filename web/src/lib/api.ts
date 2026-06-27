@@ -67,6 +67,7 @@ export interface PartySwitch {
 export interface PersonResume {
   id: number;
   display_name: string;
+  native_name: string | null;
   age: number | null;
   education: string | null;
   office_terms: OfficeTerm[];
@@ -79,6 +80,7 @@ export interface PersonResume {
 export interface PersonSummary {
   id: number;
   display_name: string;
+  native_name: string | null;
   current_party: string | null;
   current_house: string | null;
   constituency: string | null;

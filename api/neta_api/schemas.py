@@ -74,6 +74,7 @@ class PartySwitch(BaseModel):
 class PersonResume(BaseModel):
     id: int
     display_name: str
+    native_name: str | None = None     # Devanagari (Hindi) name, where available
     age: int | None = None
     education: str | None = None
     office_terms: list[OfficeTerm]
@@ -86,6 +87,7 @@ class PersonResume(BaseModel):
 class PersonSummary(BaseModel):
     id: int
     display_name: str
+    native_name: str | None = None
     current_party: str | None
     current_house: str | None
     constituency: str | None

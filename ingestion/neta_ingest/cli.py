@@ -59,6 +59,14 @@ def resolve() -> None:
     p.run()
 
 
+@app.command(name="native-names")
+def native_names() -> None:
+    """Backfill Devanagari (Hindi) names from Wikidata for the 18th Lok Sabha."""
+    from neta_ingest.pipelines import native_names as p
+
+    p.run()
+
+
 @app.command(name="enrich-switches")
 def enrich_switches() -> None:
     """Attach sourced 'why' narratives to detected party-switch events."""

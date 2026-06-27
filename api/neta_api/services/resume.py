@@ -32,7 +32,15 @@ def _source(row) -> Source:
 
 def build_resume(db: Session, person_id: int) -> PersonResume | None:
     person = db.execute(
-        text("SELECT id, display_name FROM person WHERE id = :pid"), {"pid": person_id}
+        text(
+            """
+            SELECT p.id, p.display_name,
+                   (SELECT variant FROM person_name_variant
+                    WHERE person_id = p.id AND script = 'devanagari' LIMIT 1) AS native_name
+            FROM person p WHERE p.id = :pid
+            """
+        ),
+        {"pid": person_id},
     ).first()
     if person is None:
         return None
@@ -195,6 +203,7 @@ def build_resume(db: Session, person_id: int) -> PersonResume | None:
     return PersonResume(
         id=person.id,
         display_name=person.display_name,
+        native_name=person.native_name,
         age=latest.age if latest else None,
         education=latest.education if latest else None,
         office_terms=office_terms,
@@ -209,6 +218,8 @@ def build_resume(db: Session, person_id: int) -> PersonResume | None:
 # case counts, and worst severity. `{where}` and `{order}` are filled by list/search.
 _SUMMARY_SQL = """
     SELECT p.id, p.display_name,
+           (SELECT variant FROM person_name_variant
+            WHERE person_id = p.id AND script = 'devanagari' LIMIT 1) AS native_name,
            cur.party       AS current_party,
            oh.house        AS current_house,
            oh.constituency AS constituency,
@@ -251,6 +262,7 @@ def _to_summary(r) -> PersonSummary:
     return PersonSummary(
         id=r.id,
         display_name=r.display_name,
+        native_name=r.native_name,
         current_party=r.current_party,
         current_house=r.current_house,
         constituency=r.constituency,

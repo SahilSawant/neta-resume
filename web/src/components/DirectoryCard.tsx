@@ -14,6 +14,7 @@ export function DirectoryCard({ p }: { p: PersonSummary }) {
         <PhotoBox w={50} h={60} />
         <div style={{ minWidth: 0 }}>
           <div className="serif" style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.1 }}>{p.display_name}</div>
+          {p.native_name && <div className="deva" style={{ fontSize: 12, color: "var(--muted)", marginTop: 1 }}>{p.native_name}</div>}
           <div style={{ marginTop: 8 }}>
             <PartyPill party={p.current_party} />
           </div>

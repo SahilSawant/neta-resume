@@ -54,6 +54,9 @@ export default async function PersonPage({ params }: { params: Promise<{ id: str
                   <h1 className="serif" style={{ fontSize: 42, fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1, margin: 0 }}>
                     {resume.display_name}
                   </h1>
+                  {resume.native_name && (
+                    <div className="deva" style={{ fontSize: 18, color: "var(--muted)", marginTop: 4 }}>{resume.native_name}</div>
+                  )}
                   <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 9, marginTop: 16 }}>
                     <PartyPill party={currentParty} />
                     {lead && <Meta>{lead.membership_type === "nominated" ? "Nominated" : "MP"} · {lead.house}</Meta>}
