@@ -56,6 +56,14 @@ export interface CriminalCase {
   source: Source;
 }
 
+export interface PartySwitch {
+  from_party: string | null;
+  to_party: string;
+  event_date: string | null;
+  narrative: string | null;
+  source: Source | null;
+}
+
 export interface PersonResume {
   id: number;
   display_name: string;
@@ -63,6 +71,7 @@ export interface PersonResume {
   education: string | null;
   office_terms: OfficeTerm[];
   party_history: PartyStint[];
+  party_switches: PartySwitch[];
   wealth: AffidavitWealth[];
   criminal_cases: CriminalCase[];
 }

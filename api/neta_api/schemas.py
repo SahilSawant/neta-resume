@@ -63,6 +63,14 @@ class CriminalCase(BaseModel):
     source: Source
 
 
+class PartySwitch(BaseModel):
+    from_party: str | None
+    to_party: str
+    event_date: date | None
+    narrative: str | None              # REPORTED reason, quoted from the public record
+    source: Source | None
+
+
 class PersonResume(BaseModel):
     id: int
     display_name: str
@@ -70,6 +78,7 @@ class PersonResume(BaseModel):
     education: str | None = None
     office_terms: list[OfficeTerm]
     party_history: list[PartyStint]
+    party_switches: list[PartySwitch] = []
     wealth: list[AffidavitWealth]      # ordered by filed_year for YoY
     criminal_cases: list[CriminalCase]
 

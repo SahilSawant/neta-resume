@@ -59,6 +59,22 @@ def resolve() -> None:
     p.run()
 
 
+@app.command(name="enrich-switches")
+def enrich_switches() -> None:
+    """Attach sourced 'why' narratives to detected party-switch events."""
+    from neta_ingest.pipelines import enrich_switches as p
+
+    p.run()
+
+
+@app.command(name="canon-parties")
+def canon_parties() -> None:
+    """Merge abbreviation/full-name duplicate party records and clear resulting false switches."""
+    from neta_ingest.pipelines import canon_parties as p
+
+    p.run()
+
+
 @app.command(name="merge-cycles")
 def merge_cycles() -> None:
     """Merge the same person across election cycles (incumbents) and detect party switches."""

@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import type { PersonResume } from "@/lib/api";
-import { rupees, severityMeta, year } from "@/lib/format";
+import { rupees, severityMeta, year, pretty } from "@/lib/format";
 import { Donut, WealthLine } from "@/components/resume/charts";
-import { SourceLink, PendingFlag, SeverityBadge, PartyPill } from "@/components/ui";
+import { SourceLink, SourceChip, PendingFlag, SeverityBadge, PartyPill } from "@/components/ui";
 
 const TABS = ["Overview", "Wealth", "Cases", "Career & Party"] as const;
 type Tab = (typeof TABS)[number];
@@ -201,9 +201,48 @@ function Cases({ resume }: { resume: PersonResume }) {
   );
 }
 
+function PartySwitches({ resume }: { resume: PersonResume }) {
+  const switches = resume.party_switches ?? [];
+  if (!switches.length) return null;
+  return (
+    <div className="fadeUp" style={{ border: "1px solid var(--rule)", borderRadius: 12, background: "var(--card2)", padding: "24px 26px", marginBottom: 18 }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 4 }}>
+        <span style={{ ...headStyle, fontSize: 16 }}>Party changes — when &amp; why</span>
+        <span className="mono" style={{ fontSize: 10, color: "var(--faint)", letterSpacing: "0.06em" }}>REPORTED · SOURCED</span>
+      </div>
+      <p style={{ fontSize: 12.5, color: "var(--muted)", margin: "0 0 18px", lineHeight: 1.5 }}>
+        Detected from the public record. The reason is quoted from reporting — never inferred.
+      </p>
+      {switches.map((sw, i) => (
+        <div key={i} style={{ display: "flex", gap: 16, marginBottom: i < switches.length - 1 ? 18 : 0 }}>
+          <span style={{ width: 4, alignSelf: "stretch", borderRadius: 4, background: "var(--accent-2)", flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap" }}>
+              <PartyPill party={sw.from_party} current={false} />
+              <span style={{ color: "var(--faint)" }}>→</span>
+              <PartyPill party={sw.to_party} />
+              {sw.event_date && <span className="mono" style={{ fontSize: 11, color: "var(--muted)" }}>{pretty(sw.event_date)}</span>}
+            </div>
+            {sw.narrative && (
+              <p style={{ fontSize: 13.5, color: "var(--ink2)", lineHeight: 1.55, margin: "10px 0 0" }}>{sw.narrative}</p>
+            )}
+            {sw.source && (
+              <div style={{ marginTop: 8 }}>
+                <SourceChip source={sw.source} label={sw.source.name} />
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function Career({ resume }: { resume: PersonResume }) {
   const terms = resume.office_terms;
   return (
+    <>
+    <PartySwitches resume={resume} />
     <div className="fadeUp" style={{ border: "1px solid var(--rule)", borderRadius: 12, background: "var(--card2)", padding: "32px 30px" }}>
       {terms.map((o, i) => {
         const span = [o.start_date, o.end_date].filter(Boolean).map(year).join("–") || `${o.house} ${o.cycle_number}`;
@@ -228,6 +267,7 @@ function Career({ resume }: { resume: PersonResume }) {
       })}
       <PartyNote resume={resume} />
     </div>
+    </>
   );
 }
 

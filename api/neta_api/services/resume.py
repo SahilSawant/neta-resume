@@ -14,6 +14,7 @@ from neta_api.schemas import (
     CriminalCase,
     OfficeTerm,
     PartyStint,
+    PartySwitch,
     PersonResume,
     PersonSummary,
     Source,
@@ -98,6 +99,34 @@ def build_resume(db: Session, person_id: int) -> PersonResume | None:
         )
     ]
 
+    party_switches = [
+        PartySwitch(
+            from_party=r.from_party,
+            to_party=r.to_party,
+            event_date=r.event_date,
+            narrative=r.narrative,
+            source=_source(r) if r.source_code else None,
+        )
+        for r in db.execute(
+            text(
+                """
+                SELECT fp.canonical_name AS from_party, tp.canonical_name AS to_party,
+                       e.event_date, e.narrative,
+                       s.code AS source_code, COALESCE(sr.raw_name, s.name) AS source_name,
+                       s.trust_tier, sr.native_url
+                FROM party_switch_event e
+                JOIN party tp ON tp.id = e.to_party_id
+                LEFT JOIN party fp ON fp.id = e.from_party_id
+                LEFT JOIN source_ref sr ON sr.id = e.narrative_source_ref_id
+                LEFT JOIN source s ON s.id = sr.source_id
+                WHERE e.person_id = :pid
+                ORDER BY e.event_date NULLS LAST
+                """
+            ),
+            {"pid": person_id},
+        )
+    ]
+
     wealth_rows = list(
         db.execute(
             text(
@@ -170,6 +199,7 @@ def build_resume(db: Session, person_id: int) -> PersonResume | None:
         education=latest.education if latest else None,
         office_terms=office_terms,
         party_history=party_history,
+        party_switches=party_switches,
         wealth=wealth,
         criminal_cases=criminal_cases,
     )
