@@ -59,6 +59,14 @@ def resolve() -> None:
     p.run()
 
 
+@app.command(name="ls-roster")
+def ls_roster() -> None:
+    """Complete the Lok Sabha roster + official photos from sansad.in (fill + add missing members)."""
+    from neta_ingest.pipelines import ls_roster as p
+
+    p.run()
+
+
 @app.command(name="rajya-sabha")
 def rajya_sabha() -> None:
     """Ingest the sitting Rajya Sabha roster from sansad.in (roster + photo; no affidavit data)."""

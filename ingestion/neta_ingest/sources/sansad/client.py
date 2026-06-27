@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from neta_ingest.http import client as http
 
 RS_API = "https://sansad.in/api_rs/member/sitting-members"
+LS_API = "https://sansad.in/api_ls/member"
 _HONORIFICS = re.compile(
     r"\b(dr|shri|smt|kumari|km|adv|advocate|prof|mr|mrs|ms|thiru|selvi|justice|hon|md|mohd|capt|col)\.?\b",
     re.IGNORECASE,
@@ -59,6 +60,58 @@ def _years(term: str | None) -> tuple[int | None, int | None]:
     m = re.findall(r"(19|20)\d{2}", term)
     yrs = re.findall(r"((?:19|20)\d{2})", term)
     return (int(yrs[0]) if yrs else None, int(yrs[1]) if len(yrs) > 1 else None)
+
+
+@dataclass(slots=True)
+class LsMember:
+    member_id: str          # mpsno -> source_ref.native_id
+    name: str               # cleaned "Given Surname"
+    party: str | None       # party short name (resolved via canon map)
+    state: str | None
+    constituency: str | None
+    photo_url: str | None
+    age: int | None
+    gender: str | None
+    terms: int | None
+    profile_url: str
+
+
+def fetch_ls_sitting_members(page_size: int = 100) -> list[LsMember]:
+    """Fetch all sitting (18th) Lok Sabha members from the official sansad.in API."""
+    out: list[LsMember] = []
+    page = 1
+    while True:
+        resp = http.get(
+            LS_API,
+            params={"loksabha": 18, "sitting": 1, "page": page, "size": page_size, "locale": "en",
+                    "state": "", "party": "", "gender": "", "ageFrom": "", "ageTo": "",
+                    "noOfTerms": "", "searchText": "", "constituency": "", "month": ""},
+            headers={"Accept": "application/json"},
+        )
+        data = resp.json()
+        records = data.get("membersDtoList", [])
+        for r in records:
+            name = _HONORIFICS.sub("", r.get("mpFirstLastName") or "").strip()
+            name = re.sub(r"\s+", " ", name).strip(" .")
+            out.append(
+                LsMember(
+                    member_id=str(r["mpsno"]),
+                    name=name,
+                    party=(r.get("partySname") or r.get("partyFname") or "").strip() or None,
+                    state=(r.get("stateName") or "").strip() or None,
+                    constituency=(r.get("constName") or "").strip() or None,
+                    photo_url=(r.get("imageUrl") or "").strip() or None,
+                    age=r.get("age"),
+                    gender=(r.get("gender") or "").strip().title() or None,
+                    terms=r.get("noOfTerms"),
+                    profile_url=f"https://sansad.in/ls/members?mpsno={r['mpsno']}",
+                )
+            )
+        meta = data.get("metaDatasDto", {})
+        if page >= meta.get("totalPages", 1) or not records:
+            break
+        page += 1
+    return out
 
 
 def fetch_rs_sitting_members(page_size: int = 100) -> list[RsMember]:

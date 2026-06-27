@@ -9,6 +9,10 @@ import { SourceLink, SourceChip, PendingFlag, SeverityBadge, PartyPill } from "@
 const TABS = ["Overview", "Wealth", "Cases", "Career & Party"] as const;
 type Tab = (typeof TABS)[number];
 
+function isRajyaSabha(resume: PersonResume): boolean {
+  return resume.office_terms.some((o) => o.house.includes("Rajya Sabha"));
+}
+
 export function ProfileTabs({ resume }: { resume: PersonResume }) {
   const [tab, setTab] = useState<Tab>("Overview");
 
@@ -100,7 +104,7 @@ function Overview({ resume }: { resume: PersonResume }) {
               <Muted>No criminal cases declared.</Muted>
             </div>
           ) : (
-            <Muted>No affidavit on record (Rajya Sabha).</Muted>
+            <Muted>No affidavit on record.</Muted>
           )}
         </div>
       </div>
@@ -170,7 +174,11 @@ function Cases({ resume }: { resume: PersonResume }) {
             <Muted>No criminal cases declared in this affidavit.</Muted>
           </>
         ) : (
-          <Muted>No ECI candidate affidavit is on record. Sitting Rajya Sabha members are indirectly elected and file no candidate affidavit, so declared cases are not available here.</Muted>
+          <Muted>
+            {isRajyaSabha(resume)
+              ? "No ECI candidate affidavit is on record. Sitting Rajya Sabha members are indirectly elected and file no candidate affidavit, so declared cases are not available here."
+              : "No ECI candidate affidavit has been matched for this member yet, so declared cases are not available here."}
+          </Muted>
         )}
       </div>
     );
