@@ -15,7 +15,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from neta_ingest.http import client as http
+from neta_core.http import client as http
 
 RS_API = "https://sansad.in/api_rs/member/sitting-members"
 LS_API = "https://sansad.in/api_ls/member"

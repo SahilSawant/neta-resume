@@ -15,9 +15,9 @@ from pathlib import Path
 
 from sqlalchemy import text
 
-from neta_ingest.config import settings
-from neta_ingest.db.engine import session_scope
-from neta_ingest.sources.myneta.parser import parse_candidate
+from neta_core.config import settings
+from neta_core.db.engine import session_scope
+from neta_sources.myneta.parser import parse_candidate
 
 CACHE = Path(settings.raw_cache_dir)
 

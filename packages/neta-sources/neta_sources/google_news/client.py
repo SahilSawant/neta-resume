@@ -17,8 +17,8 @@ from email.utils import parsedate_to_datetime
 from urllib.parse import quote_plus
 from xml.etree import ElementTree as ET
 
-from neta_ingest.http import client as http
-from neta_ingest.provenance import cache_raw
+from neta_core.http import client as http
+from neta_core.provenance import cache_raw
 
 # Google sometimes serves the bot UA a thin page; a browser-like UA gets the full feed.
 _UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"

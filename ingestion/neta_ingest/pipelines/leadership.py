@@ -11,10 +11,10 @@ from __future__ import annotations
 
 from sqlalchemy import text
 
-from neta_ingest.db.engine import session_scope
+from neta_core.db.engine import session_scope
 from neta_ingest.pipelines.affidavit_attach import name_tokens
-from neta_ingest.provenance import record_source_ref
-from neta_ingest.transform.names import normalize_name
+from neta_core.provenance import record_source_ref
+from neta_core.transform.names import normalize_name
 
 # 18th Lok Sabha term anchor (first sitting 2024-06-24; the Modi-3.0 cabinet was sworn in 2024-06-09 —
 # we anchor all to the term start for a stable idempotency key).

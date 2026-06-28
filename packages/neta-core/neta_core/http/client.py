@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 import httpx
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
-from neta_ingest.config import settings
+from neta_core.config import settings
 
 _last_hit: dict[str, float] = {}
 

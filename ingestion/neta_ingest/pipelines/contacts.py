@@ -10,9 +10,9 @@ from __future__ import annotations
 
 from sqlalchemy import text
 
-from neta_ingest.db.engine import session_scope
-from neta_ingest.provenance import record_source_ref
-from neta_ingest.sources.sansad import client as sansad
+from neta_core.db.engine import session_scope
+from neta_core.provenance import record_source_ref
+from neta_sources.sansad import client as sansad
 
 
 def run(house: str | None = None) -> None:

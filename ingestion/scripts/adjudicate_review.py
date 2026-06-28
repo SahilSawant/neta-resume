@@ -15,9 +15,9 @@ from pathlib import Path
 
 from sqlalchemy import text
 
-from neta_ingest.db.engine import session_scope
+from neta_core.db.engine import session_scope
 from neta_ingest.pipelines import affidavit_attach as aa
-from neta_ingest.sources.myneta import client as myneta
+from neta_sources.myneta import client as myneta
 
 CYCLES = ("LS2019", "LS2014", "LS2009")
 AGE_TOLERANCE = 3

@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from neta_ingest.config import settings
+from neta_core.config import settings
 
 engine = create_engine(settings.database_url, pool_pre_ping=True, future=True)
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False, future=True)

@@ -22,12 +22,12 @@ from pathlib import Path
 
 from sqlalchemy import text
 
-from neta_ingest.config import settings
-from neta_ingest.db.engine import session_scope
+from neta_core.config import settings
+from neta_core.db.engine import session_scope
 from neta_ingest.pipelines import affidavit_attach as aa
-from neta_ingest.sources.myneta import client as myneta
-from neta_ingest.sources.myneta.parser import parse_candidate
-from neta_ingest.transform.parties import resolve_or_create_party_id
+from neta_sources.myneta import client as myneta
+from neta_sources.myneta.parser import parse_candidate
+from neta_core.transform.parties import resolve_or_create_party_id
 
 CACHE = Path(settings.raw_cache_dir)
 QDIR = Path("data/hist_index")

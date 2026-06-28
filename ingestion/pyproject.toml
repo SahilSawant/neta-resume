@@ -1,22 +1,20 @@
 [project]
 name = "neta-ingest"
 version = "0.1.0"
-description = "Neta-Resume ingestion pipelines: fetch, normalize, entity-resolve, upsert."
+description = "Neta-Resume ingestion runner: the Typer CLI + pipelines. Depends on neta-core + neta-sources."
 requires-python = ">=3.12"
 dependencies = [
-    "httpx>=0.27",          # polite HTTP client w/ retries
-    "tenacity>=8.2",        # backoff/retry
-    "selectolax>=0.3",      # fast HTML parsing
-    "beautifulsoup4>=4.12", # fallback HTML parsing
-    "lxml>=5.0",
-    "sqlalchemy>=2.0",      # ORM + upsert
-    "psycopg[binary]>=3.2", # postgres driver
-    "pydantic>=2.7",        # typed records
-    "pydantic-settings>=2.3",
+    "neta-core",
+    "neta-sources",
+    "sqlalchemy>=2.0",      # pipelines issue raw SQL via text()
     "typer>=0.12",          # CLI (`neta <pipeline>`)
-    "playwright>=1.60",     # JS/heavy pages (already in user's toolbelt)
+    "playwright>=1.60",     # JS/heavy pages
     "python-dateutil>=2.9",
 ]
+
+[tool.uv.sources]
+neta-core = { workspace = true }
+neta-sources = { workspace = true }
 
 [project.scripts]
 neta = "neta_ingest.cli:app"

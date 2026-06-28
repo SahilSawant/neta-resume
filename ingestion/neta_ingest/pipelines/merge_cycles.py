@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from sqlalchemy import text
 
-from neta_ingest.db.engine import session_scope
+from neta_core.db.engine import session_scope
 
 # Person-scoped tables whose rows must move from the merged-away person to the survivor.
 _PERSON_TABLES = (

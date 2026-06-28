@@ -1,8 +1,8 @@
 """Unit tests for the pure transform logic (no DB needed): money, sections, names."""
 
-from neta_ingest.transform.money import parse_rupees
-from neta_ingest.transform.names import normalize_name
-from neta_ingest.transform.sections import parse_sections, rollup_severity
+from neta_core.transform.money import parse_rupees
+from neta_core.transform.names import normalize_name
+from neta_core.transform.sections import parse_sections, rollup_severity
 
 
 class TestParseRupees:

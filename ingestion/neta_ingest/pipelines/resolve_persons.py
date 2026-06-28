@@ -9,7 +9,7 @@ Steps (see docs/entity-resolution.md):
 
 from __future__ import annotations
 
-from neta_ingest.resolve import match
+from neta_core.resolve import match
 
 
 def run() -> None:

@@ -11,9 +11,9 @@ from __future__ import annotations
 
 from sqlalchemy import text
 
-from neta_ingest.db.engine import session_scope
+from neta_core.db.engine import session_scope
 from neta_ingest.pipelines import myneta as myneta_pipeline
-from neta_ingest.sources.myneta import client as myneta
+from neta_sources.myneta import client as myneta
 
 
 def run(house: str = "mh_vs", cycle: str = "MH_VS2024") -> None:
