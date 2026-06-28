@@ -1,7 +1,7 @@
 """Affidavit/wealth pipeline: MyNeta candidate pages -> affidavit + affidavit_line_item.
 
 Steps (idempotent):
-  1. Fetch candidate affidavit pages for (house, cycle) from neta_ingest.sources.myneta.
+  1. Fetch candidate affidavit pages for (house, cycle) from neta_sources.myneta.
   2. transform.money.parse_rupees on assets/liabilities/income -> integer rupees.
   3. record_source_ref(source='myneta', native_id=candidate_id, native_url=page_url).
   4. Upsert affidavit (UNIQUE person_id, election_cycle, source_ref_id); upsert line items.
@@ -11,7 +11,7 @@ Backfill historical cycles from datameet/Vonter parsed corpora instead of live-s
 
 from __future__ import annotations
 
-from neta_ingest.sources.myneta import client as myneta
+from neta_sources.myneta import client as myneta
 
 
 def run(house: str = "ls", cycle: str = "LS2024") -> None:

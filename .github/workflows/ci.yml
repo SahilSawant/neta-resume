@@ -6,16 +6,14 @@ on:
   pull_request:
 
 jobs:
+  # Python workspace: neta-core + neta-sources + the ingestion runner (api is a separate, independent job).
   ingestion:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ingestion
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
       - run: uv sync --dev
-      - run: uv run ruff check .
+      - run: uv run ruff check packages ingestion
       - run: uv run pytest -q
 
   api:

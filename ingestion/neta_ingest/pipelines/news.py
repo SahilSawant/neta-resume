@@ -9,10 +9,10 @@ from __future__ import annotations
 
 from sqlalchemy import text
 
-from neta_ingest.db.engine import session_scope
+from neta_core.db.engine import session_scope
 from neta_ingest.pipelines.affidavit_attach import name_tokens
-from neta_ingest.provenance import record_source_ref
-from neta_ingest.sources.google_news import client as gn
+from neta_core.provenance import record_source_ref
+from neta_sources.google_news import client as gn
 
 KEEP = 15  # most-recent articles to store per legislator
 

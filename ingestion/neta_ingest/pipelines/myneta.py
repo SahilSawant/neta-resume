@@ -15,13 +15,13 @@ import re
 
 from sqlalchemy import text
 
-from neta_ingest.config import settings
-from neta_ingest.db.engine import session_scope
-from neta_ingest.sources.myneta import client as myneta
-from neta_ingest.sources.myneta.parser import ParsedCandidate
-from neta_ingest.transform.names import normalize_name
-from neta_ingest.transform.parties import resolve_or_create_party_id
-from neta_ingest.transform.sections import rollup_severity
+from neta_core.config import settings
+from neta_core.db.engine import session_scope
+from neta_sources.myneta import client as myneta
+from neta_sources.myneta.parser import ParsedCandidate
+from neta_core.transform.names import normalize_name
+from neta_core.transform.parties import resolve_or_create_party_id
+from neta_core.transform.sections import rollup_severity
 
 # State-assembly candidate pages don't repeat the state (the whole election is one state), so we stamp it
 # from the house's state_code. ISO 3166-2:IN codes -> canonical state name (extend as states are added).

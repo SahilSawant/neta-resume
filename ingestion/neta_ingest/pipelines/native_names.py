@@ -10,9 +10,9 @@ from __future__ import annotations
 
 from sqlalchemy import text
 
-from neta_ingest.db.engine import session_scope
-from neta_ingest.http import client as http
-from neta_ingest.transform.names import normalize_name
+from neta_core.db.engine import session_scope
+from neta_core.http import client as http
+from neta_core.transform.names import normalize_name
 
 SPARQL = """
 SELECT ?p ?enLabel ?hiLabel WHERE {

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from sqlalchemy import text
 
-from neta_ingest.db.engine import session_scope
+from neta_core.db.engine import session_scope
 
 # variant (lower-cased name OR abbr) -> canonical display name
 CANON: dict[str, str] = {

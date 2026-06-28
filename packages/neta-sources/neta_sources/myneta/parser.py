@@ -20,8 +20,8 @@ from dataclasses import dataclass, field
 
 from selectolax.parser import HTMLParser
 
-from neta_ingest.transform.money import parse_rupees
-from neta_ingest.transform.sections import has_statute_marker, parse_sections
+from neta_core.transform.money import parse_rupees
+from neta_core.transform.sections import has_statute_marker, parse_sections
 
 
 def _strip_tags(s: str) -> str:

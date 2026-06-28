@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from neta_ingest.sources.myneta.parser import parse_candidate
+from neta_sources.myneta.parser import parse_candidate
 
 FIXTURES = Path(__file__).parent / "fixtures"
 

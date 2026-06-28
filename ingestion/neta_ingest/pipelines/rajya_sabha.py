@@ -10,10 +10,10 @@ from __future__ import annotations
 
 from sqlalchemy import text
 
-from neta_ingest.db.engine import session_scope
-from neta_ingest.sources.sansad import client as sansad
-from neta_ingest.transform.names import normalize_name
-from neta_ingest.transform.parties import resolve_or_create_party_id
+from neta_core.db.engine import session_scope
+from neta_sources.sansad import client as sansad
+from neta_core.transform.names import normalize_name
+from neta_core.transform.parties import resolve_or_create_party_id
 
 
 def run() -> None:

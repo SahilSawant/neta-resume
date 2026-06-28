@@ -12,8 +12,8 @@ from pathlib import Path
 from sqlalchemy import MetaData, Table
 from sqlalchemy.orm import Session
 
-from neta_ingest.config import settings
-from neta_ingest.db.upsert import upsert
+from neta_core.config import settings
+from neta_core.db.upsert import upsert
 
 _meta = MetaData()
 

@@ -1,7 +1,7 @@
 """Criminal-case pipeline: MyNeta declared cases -> criminal_case + case_charge (+ severity).
 
 Steps (idempotent):
-  1. Fetch declared cases for (house, cycle) from neta_ingest.sources.myneta.
+  1. Fetch declared cases for (house, cycle) from neta_sources.myneta.
   2. transform.sections.parse_sections(raw) -> [(code_system, section_number)].
   3. Look up legal_section.base_severity for each; transform.sections.rollup_severity -> case severity.
   4. Upsert criminal_case (stamp settings.severity_rule_version) + case_charge.
@@ -11,7 +11,7 @@ Court live-status enrichment (bharat-courts/eCourts) is a SEPARATE later pass ke
 
 from __future__ import annotations
 
-from neta_ingest.sources.myneta import client as myneta
+from neta_sources.myneta import client as myneta
 
 
 def run(house: str = "ls", cycle: str = "LS2024") -> None:

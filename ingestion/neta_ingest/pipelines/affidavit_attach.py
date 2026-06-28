@@ -17,12 +17,12 @@ import re
 
 from sqlalchemy import text
 
-from neta_ingest.config import settings
-from neta_ingest.sources.myneta import client as myneta
-from neta_ingest.sources.myneta.parser import ParsedCandidate
-from neta_ingest.transform.names import normalize_name
-from neta_ingest.transform.parties import resolve_or_create_party_id
-from neta_ingest.transform.sections import rollup_severity
+from neta_core.config import settings
+from neta_sources.myneta import client as myneta
+from neta_sources.myneta.parser import ParsedCandidate
+from neta_core.transform.names import normalize_name
+from neta_core.transform.parties import resolve_or_create_party_id
+from neta_core.transform.sections import rollup_severity
 
 _TITLES = {"dr", "shri", "smt", "kumari", "km", "adv", "prof", "mr", "mrs", "ms", "com", "chh",
            "maharaj", "alias", "thiru", "selvi", "md", "mohd", "capt", "col", "justice", "ku"}

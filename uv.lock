@@ -2,6 +2,13 @@ version = 1
 revision = 3
 requires-python = ">=3.12"
 
+[manifest]
+members = [
+    "neta-core",
+    "neta-ingest",
+    "neta-sources",
+]
+
 [[package]]
 name = "annotated-doc"
 version = "0.0.4"
@@ -288,21 +295,38 @@ wheels = [
 ]
 
 [[package]]
-name = "neta-ingest"
+name = "neta-core"
 version = "0.1.0"
-source = { editable = "." }
+source = { editable = "packages/neta-core" }
 dependencies = [
-    { name = "beautifulsoup4" },
     { name = "httpx" },
-    { name = "lxml" },
-    { name = "playwright" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pydantic" },
     { name = "pydantic-settings" },
-    { name = "python-dateutil" },
-    { name = "selectolax" },
     { name = "sqlalchemy" },
     { name = "tenacity" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "httpx", specifier = ">=0.27" },
+    { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
+    { name = "pydantic", specifier = ">=2.7" },
+    { name = "pydantic-settings", specifier = ">=2.3" },
+    { name = "sqlalchemy", specifier = ">=2.0" },
+    { name = "tenacity", specifier = ">=8.2" },
+]
+
+[[package]]
+name = "neta-ingest"
+version = "0.1.0"
+source = { editable = "ingestion" }
+dependencies = [
+    { name = "neta-core" },
+    { name = "neta-sources" },
+    { name = "playwright" },
+    { name = "python-dateutil" },
+    { name = "sqlalchemy" },
     { name = "typer" },
 ]
 
@@ -314,17 +338,11 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "beautifulsoup4", specifier = ">=4.12" },
-    { name = "httpx", specifier = ">=0.27" },
-    { name = "lxml", specifier = ">=5.0" },
+    { name = "neta-core", editable = "packages/neta-core" },
+    { name = "neta-sources", editable = "packages/neta-sources" },
     { name = "playwright", specifier = ">=1.60" },
-    { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
-    { name = "pydantic", specifier = ">=2.7" },
-    { name = "pydantic-settings", specifier = ">=2.3" },
     { name = "python-dateutil", specifier = ">=2.9" },
-    { name = "selectolax", specifier = ">=0.3" },
     { name = "sqlalchemy", specifier = ">=2.0" },
-    { name = "tenacity", specifier = ">=8.2" },
     { name = "typer", specifier = ">=0.12" },
 ]
 
@@ -332,6 +350,25 @@ requires-dist = [
 dev = [
     { name = "pytest", specifier = ">=8.0" },
     { name = "ruff", specifier = ">=0.5" },
+]
+
+[[package]]
+name = "neta-sources"
+version = "0.1.0"
+source = { editable = "packages/neta-sources" }
+dependencies = [
+    { name = "beautifulsoup4" },
+    { name = "lxml" },
+    { name = "neta-core" },
+    { name = "selectolax" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "beautifulsoup4", specifier = ">=4.12" },
+    { name = "lxml", specifier = ">=5.0" },
+    { name = "neta-core", editable = "packages/neta-core" },
+    { name = "selectolax", specifier = ">=0.3" },
 ]
 
 [[package]]

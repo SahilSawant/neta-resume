@@ -17,10 +17,10 @@ import difflib
 
 from sqlalchemy import text
 
-from neta_ingest.db.engine import session_scope
-from neta_ingest.provenance import record_source_ref
-from neta_ingest.sources.prs import client as prs
-from neta_ingest.transform.names import normalize_name
+from neta_core.db.engine import session_scope
+from neta_core.provenance import record_source_ref
+from neta_sources.prs import client as prs
+from neta_core.transform.names import normalize_name
 
 # house code -> (DB house code, current term_cycle WHERE clause)
 _CYCLE = {

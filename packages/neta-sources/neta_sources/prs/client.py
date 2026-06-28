@@ -8,7 +8,7 @@ enumerate members, then fetch a member's profile for the %.
 
 Houses: LS = /mptrack/18th-lok-sabha, RS = /mptrack/rajya-sabha.
 
-LICENSE: non-commercial public resource. Scrape politely (neta_ingest.http.client throttles); every
+LICENSE: non-commercial public resource. Scrape politely (neta_core.http.client throttles); every
 profile's raw HTML is cached so each attendance value keeps a snapshot it was derived from.
 
 Caveat (not a bug): ministers, the PM, the Speaker/Deputy Speaker and the Leader of Opposition don't
@@ -20,8 +20,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from neta_ingest.http import client as http
-from neta_ingest.provenance import cache_raw
+from neta_core.http import client as http
+from neta_core.provenance import cache_raw
 
 BASE = "https://prsindia.org"
 

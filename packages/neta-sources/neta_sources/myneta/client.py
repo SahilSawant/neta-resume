@@ -1,6 +1,6 @@
 """MyNeta (ADR) client — wealth + criminal affidavit data.
 
-LICENSE: non-commercial only; no bulk CSV. Scrape politely (neta_ingest.http.client throttles).
+LICENSE: non-commercial only; no bulk CSV. Scrape politely (neta_core.http.client throttles).
 URL scheme is election-partitioned, e.g. base = https://www.myneta.info/LokSabha2024
   winners list : {base}/index.php?action=show_winners&sort=default
   candidate    : {base}/candidate.php?candidate_id={id}
@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import re
 
-from neta_ingest.http import client as http
-from neta_ingest.provenance import cache_raw
-from neta_ingest.sources.myneta.parser import (
+from neta_core.http import client as http
+from neta_core.provenance import cache_raw
+from neta_sources.myneta.parser import (
     ParsedCandidate,
     WinnerRow,
     parse_candidate,
