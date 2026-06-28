@@ -1,9 +1,32 @@
-// Pure SVG chart components (no client hooks) — usable in server or client components.
+"use client";
+
+// Recharts-backed charts: interactive, responsive, and dark-mode aware. Same prop shapes as before
+// (Donut/WealthLine) so call sites are untouched.
+
+import {
+  Area, AreaChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
+} from "recharts";
+import { rupees } from "@/lib/format";
+import { resolveColor, useThemeColors } from "@/lib/useThemeColors";
 
 export interface DonutSeg {
   label: string;
   value: number;
   color: string;
+}
+
+function TooltipBox({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="mono"
+      style={{
+        background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8,
+        padding: "7px 10px", fontSize: 12, color: "var(--ink)", boxShadow: "0 8px 24px -12px rgba(0,0,0,0.4)",
+      }}
+    >
+      {children}
+    </div>
+  );
 }
 
 /** Severity / distribution donut with a centred count + legend. */
@@ -18,43 +41,51 @@ export function Donut({
   centerLabel: string;
   size?: number;
 }) {
-  const r = 54;
-  const strokeW = 18;
-  const circ = 2 * Math.PI * r;
-  const total = segments.reduce((s, x) => s + x.value, 0) || 1;
+  const colors = useThemeColors();
+  const data = segments.filter((s) => s.value > 0);
 
-  // Fit the centre number to the donut hole so long values (e.g. "4568.22 Cr") never
-  // overflow and collide with the ring. innerD = hole diameter in px; mono glyphs ≈ 0.62em.
-  const innerD = (size * (r - strokeW / 2) * 2) / 140;
+  // Fit the centre number into the donut hole (long values like "4568.22 Cr" must not overflow).
+  const innerD = size * 0.58;
   const numStr = String(centerNum).trim();
   const [mainTok, ...rest] = numStr.split(/\s+/);
   const unitTok = rest.join(" ");
   const weightedLen = mainTok.length + (unitTok ? unitTok.length * 0.55 + 0.6 : 0);
   const mainSize = Math.max(13, Math.min(26, (innerD * 0.86) / (Math.max(weightedLen, 1) * 0.62)));
   const unitSize = Math.max(9, mainSize * 0.55);
-  let offset = 0;
-  const arcs = segments
-    .filter((s) => s.value > 0)
-    .map((s) => {
-      const len = (s.value / total) * circ;
-      const dash = `${len} ${circ - len}`;
-      const arc = { color: s.color, dash, off: -offset };
-      offset += len;
-      return arc;
-    });
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
       <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
-        <svg viewBox="0 0 140 140" style={{ width: size, height: size }}>
-          <circle cx="70" cy="70" r={r} fill="none" stroke="var(--rule2)" strokeWidth={strokeW} />
-          <g style={{ transformOrigin: "70px 70px", transform: "rotate(-90deg)" }}>
-            {arcs.map((a, i) => (
-              <circle key={i} cx="70" cy="70" r={r} fill="none" stroke={a.color} strokeWidth={strokeW} strokeDasharray={a.dash} strokeDashoffset={a.off} />
+        <PieChart width={size} height={size}>
+          <Pie
+            data={data}
+            dataKey="value"
+            nameKey="label"
+            cx="50%"
+            cy="50%"
+            innerRadius={size * 0.33}
+            outerRadius={size * 0.48}
+            startAngle={90}
+            endAngle={-270}
+            paddingAngle={data.length > 1 ? 2 : 0}
+            stroke="none"
+            isAnimationActive
+          >
+            {data.map((s) => (
+              <Cell key={s.label} fill={resolveColor(colors, s.color)} />
             ))}
-          </g>
-        </svg>
-        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
+          </Pie>
+          <Tooltip
+            content={({ active, payload }) =>
+              active && payload && payload.length ? (
+                <TooltipBox>
+                  {payload[0].name}: <strong>{payload[0].value}</strong>
+                </TooltipBox>
+              ) : null
+            }
+          />
+        </PieChart>
+        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 4px", pointerEvents: "none" }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 3, maxWidth: innerD, lineHeight: 1, whiteSpace: "nowrap" }}>
             <span className="mono" style={{ fontSize: mainSize, fontWeight: 600 }}>{mainTok}</span>
             {unitTok && <span className="mono" style={{ fontSize: unitSize, fontWeight: 600, color: "var(--muted)" }}>{unitTok}</span>}
@@ -75,39 +106,54 @@ export function Donut({
   );
 }
 
-/** Net-assets-by-cycle line. Degrades to a single marker when only one cycle exists. */
+/** Net-assets-by-cycle area+line. Degrades to a single marker when only one cycle exists. */
 export function WealthLine({ points }: { points: { label: string; value: number }[] }) {
-  const W = 282;
-  const H = 150;
-  const pad = 8;
-  const max = Math.max(...points.map((p) => p.value), 1);
-  const xs = (i: number) => (points.length === 1 ? W / 2 : pad + (i * (W - 2 * pad)) / (points.length - 1));
-  const ys = (v: number) => H - pad - (v / max) * (H - 2 * pad - 20);
-
-  const line = points.map((p, i) => `${xs(i)},${ys(p.value)}`).join(" ");
-  const area = `${xs(0)},${H} ${line} ${xs(points.length - 1)},${H}`;
+  const colors = useThemeColors();
+  const accent = colors["--accent"];
+  const gid = "wealthFill";
 
   return (
-    <div>
-      <div style={{ position: "relative", height: H }}>
-        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
-          {[0.33, 0.66].map((f) => (
-            <line key={f} x1="0" y1={H * f} x2={W} y2={H * f} stroke="var(--rule2)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
-          ))}
-          <polygon points={area} fill="var(--accent)" opacity="0.12" />
-          <polyline points={line} fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" style={{ strokeDasharray: 1400, animation: "nrDraw 1.2s ease both" }} />
-        </svg>
-        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", overflow: "visible" }}>
-          {points.map((p, i) => (
-            <circle key={i} cx={xs(i)} cy={ys(p.value)} r="3.5" fill="var(--card)" stroke="var(--accent)" strokeWidth="2.5" vectorEffect="non-scaling-stroke" />
-          ))}
-        </svg>
-      </div>
-      <div style={{ display: "flex", justifyContent: points.length === 1 ? "center" : "space-between", marginTop: 10 }} className="mono">
-        {points.map((p, i) => (
-          <span key={i} style={{ fontSize: 10.5, color: "var(--muted)" }}>{p.label}</span>
-        ))}
-      </div>
+    <div style={{ width: "100%", height: 168 }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={points} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+          <defs>
+            <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={accent} stopOpacity={0.22} />
+              <stop offset="100%" stopColor={accent} stopOpacity={0.02} />
+            </linearGradient>
+          </defs>
+          <XAxis
+            dataKey="label"
+            tick={{ fontSize: 10.5, fill: colors["--muted"], fontFamily: "var(--font-mono, monospace)" }}
+            tickLine={false}
+            axisLine={{ stroke: colors["--rule2"] }}
+            interval="preserveStartEnd"
+            minTickGap={12}
+          />
+          <YAxis hide domain={[0, "dataMax"]} />
+          <Tooltip
+            cursor={{ stroke: colors["--rule2"] }}
+            content={({ active, payload, label }) =>
+              active && payload && payload.length ? (
+                <TooltipBox>
+                  <div style={{ color: "var(--muted)", marginBottom: 2 }}>{label}</div>
+                  <strong>{rupees(payload[0].value as number)}</strong>
+                </TooltipBox>
+              ) : null
+            }
+          />
+          <Area
+            type="monotone"
+            dataKey="value"
+            stroke={accent}
+            strokeWidth={2.5}
+            fill={`url(#${gid})`}
+            dot={{ r: 3.5, fill: colors["--card"], stroke: accent, strokeWidth: 2.5 }}
+            activeDot={{ r: 5, fill: accent, stroke: colors["--card"], strokeWidth: 2 }}
+            isAnimationActive
+          />
+        </AreaChart>
+      </ResponsiveContainer>
     </div>
   );
 }
