@@ -30,9 +30,16 @@ export async function getPersonResume(id: number): Promise<PersonResume | null> 
   return res.json();
 }
 
-export function listPersons(limit = 60, offset = 0, house?: string): Promise<PersonSummary[]> {
-  const h = house ? `&house=${encodeURIComponent(house)}` : "";
-  return getJSON<PersonSummary[]>(`/persons?limit=${limit}&offset=${offset}${h}`);
+export function listPersons(
+  opts: { limit?: number; offset?: number; house?: string; state?: string; constituency?: string } = {},
+): Promise<PersonSummary[]> {
+  const q = new URLSearchParams();
+  q.set("limit", String(opts.limit ?? 60));
+  q.set("offset", String(opts.offset ?? 0));
+  if (opts.house) q.set("house", opts.house);
+  if (opts.state) q.set("state", opts.state);
+  if (opts.constituency) q.set("constituency", opts.constituency);
+  return getJSON<PersonSummary[]>(`/persons?${q.toString()}`);
 }
 
 export function searchPersons(q: string): Promise<PersonSummary[]> {

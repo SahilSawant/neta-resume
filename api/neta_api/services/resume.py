@@ -239,6 +239,7 @@ _SUMMARY_SQL = """
            cur.party       AS current_party,
            oh.house        AS current_house,
            oh.constituency AS constituency,
+           oh.state        AS state,
            w.total_assets  AS net_assets,
            COALESCE(cc.total, 0)   AS total_cases,
            COALESCE(cc.pending, 0) AS pending_cases,
@@ -252,9 +253,15 @@ _SUMMARY_SQL = """
     ) cur ON true
     LEFT JOIN LATERAL (
         SELECT h.name AS house, COALESCE(ot.constituency, ot.rs_state_code) AS constituency,
+               COALESCE(ot.ls_state_code, ot.rs_state_code) AS state,
                ot.attendance_pct
-        FROM office_term ot JOIN house h ON h.id = ot.house_id
-        WHERE ot.person_id = p.id ORDER BY ot.term_cycle_id DESC LIMIT 1
+        FROM office_term ot
+        JOIN house h ON h.id = ot.house_id
+        JOIN term_cycle tc ON tc.id = ot.term_cycle_id
+        -- current term = the sitting one; fall back to the highest cycle NUMBER (NOT term_cycle_id,
+        -- which is insertion order: the LS2014/2009 cycle rows were added after LS2024).
+        WHERE ot.person_id = p.id
+        ORDER BY (ot.status = 'sitting') DESC, tc.number DESC LIMIT 1
     ) oh ON true
     LEFT JOIN LATERAL (
         SELECT total_assets FROM affidavit
@@ -285,6 +292,7 @@ def _to_summary(r) -> PersonSummary:
         current_party=r.current_party,
         current_house=r.current_house,
         constituency=r.constituency,
+        state=r.state,
         net_assets=r.net_assets,
         pending_cases=r.pending_cases,
         total_cases=r.total_cases,
@@ -293,12 +301,26 @@ def _to_summary(r) -> PersonSummary:
     )
 
 
-def list_persons(db: Session, limit: int = 60, offset: int = 0, house: str | None = None) -> list[PersonSummary]:
-    where = "WHERE oh.house = :house" if house else ""
-    sql = _SUMMARY_SQL.format(where=where, order="ORDER BY w.total_assets DESC NULLS LAST, p.display_name")
+# Normalize a name for filtering: uppercase, drop everything but letters/digits (so "Tamil Nadu",
+# "TAMIL-NADU" and "tamilnadu" all match). Used for state/constituency filters.
+_NORM = "upper(regexp_replace({col}, '[^a-zA-Z0-9]', '', 'g')) = upper(regexp_replace(:{p}, '[^a-zA-Z0-9]', '', 'g'))"
+
+
+def list_persons(db: Session, limit: int = 60, offset: int = 0, house: str | None = None,
+                 state: str | None = None, constituency: str | None = None) -> list[PersonSummary]:
+    conds: list[str] = []
     params: dict = {"limit": limit, "offset": offset}
     if house:
+        conds.append("oh.house = :house")
         params["house"] = house
+    if state:
+        conds.append(_NORM.format(col="oh.state", p="state"))
+        params["state"] = state
+    if constituency:
+        conds.append(_NORM.format(col="oh.constituency", p="constituency"))
+        params["constituency"] = constituency
+    where = ("WHERE " + " AND ".join(conds)) if conds else ""
+    sql = _SUMMARY_SQL.format(where=where, order="ORDER BY w.total_assets DESC NULLS LAST, p.display_name")
     rows = db.execute(text(sql), params)
     return [_to_summary(r) for r in rows]
 

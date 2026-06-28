@@ -30,7 +30,7 @@ export interface paths {
         };
         /**
          * List Persons
-         * @description Browse legislators (directory). Optionally filter by house. Ordered by declared assets desc.
+         * @description Browse legislators (directory). Optionally filter by house/state/constituency. Assets desc.
          */
         get: operations["list_persons_persons_get"];
         put?: never;
@@ -73,6 +73,26 @@ export interface paths {
          * @description Fuzzy search legislators by name (uses person.normalized_name trigram index).
          */
         get: operations["search_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Stats
+         * @description Real counts (total / per house / with cases / crorepatis) — not capped by any list limit.
+         */
+        get: operations["get_stats_stats_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -243,6 +263,8 @@ export interface components {
             current_house: string | null;
             /** Constituency */
             constituency: string | null;
+            /** State */
+            state?: string | null;
             /** Net Assets */
             net_assets?: number | null;
             /**
@@ -270,6 +292,19 @@ export interface components {
             url?: string | null;
             /** Trust Tier */
             trust_tier: number;
+        };
+        /** Stats */
+        Stats: {
+            /** Total Legislators */
+            total_legislators: number;
+            /** Lok Sabha */
+            lok_sabha: number;
+            /** Rajya Sabha */
+            rajya_sabha: number;
+            /** With Cases */
+            with_cases: number;
+            /** Crorepatis */
+            crorepatis: number;
         };
         /** ValidationError */
         ValidationError: {
@@ -330,6 +365,8 @@ export interface operations {
                 limit?: number;
                 offset?: number;
                 house?: string | null;
+                state?: string | null;
+                constituency?: string | null;
             };
             header?: never;
             path?: never;
@@ -415,6 +452,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_stats_stats_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Stats"];
                 };
             };
         };

@@ -8,7 +8,7 @@ export default async function RajyaSabhaPage() {
   let people: PersonSummary[] = [];
   let error = false;
   try {
-    people = await listPersons(2000, 0, "Rajya Sabha");
+    people = await listPersons({ limit: 2000, house: "Rajya Sabha" });
   } catch {
     error = true;
   }

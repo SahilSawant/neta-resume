@@ -8,7 +8,7 @@ export default async function LokSabhaPage() {
   let people: PersonSummary[] = [];
   let error = false;
   try {
-    people = await listPersons(2000, 0, "Lok Sabha");
+    people = await listPersons({ limit: 2000, house: "Lok Sabha" });
   } catch {
     error = true;
   }
