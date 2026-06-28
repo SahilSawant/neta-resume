@@ -107,6 +107,7 @@ class PersonSummary(BaseModel):
     current_party: str | None
     current_house: str | None
     constituency: str | None           # for RS this carries the represented state
+    state: str | None = None           # the member's state (LS: constituency's state; RS: represented state)
     net_assets: int | None = None          # latest declared total assets (rupees)
     pending_cases: int = 0                  # count of non-convicted cases
     total_cases: int = 0

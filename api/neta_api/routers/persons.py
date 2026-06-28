@@ -78,10 +78,14 @@ def list_persons(
     limit: int = 60,
     offset: int = 0,
     house: str | None = None,
+    state: str | None = None,
+    constituency: str | None = None,
     db: Session = Depends(get_db),
 ) -> list[PersonSummary]:
-    """Browse legislators (directory). Optionally filter by house. Ordered by declared assets desc."""
-    return resume_service.list_persons(db, limit=limit, offset=offset, house=house)
+    """Browse legislators (directory). Optionally filter by house/state/constituency. Assets desc."""
+    return resume_service.list_persons(
+        db, limit=limit, offset=offset, house=house, state=state, constituency=constituency
+    )
 
 
 @router.get("/{person_id}", response_model=PersonResume)

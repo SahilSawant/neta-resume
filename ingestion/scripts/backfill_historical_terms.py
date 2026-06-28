@@ -110,12 +110,12 @@ def main():
             s.execute(text(
                 """
                 INSERT INTO office_term
-                  (person_id, house_id, term_cycle_id, constituency, membership_type, party_id, status, source_ref_id)
-                VALUES (:p, :h, :t, :con, 'elected', :party, 'former', :sr)
+                  (person_id, house_id, term_cycle_id, constituency, ls_state_code, membership_type, party_id, status, source_ref_id)
+                VALUES (:p, :h, :t, :con, :state, 'elected', :party, 'former', :sr)
                 ON CONFLICT DO NOTHING
                 """),
                 {"p": r.person_id, "h": house_id, "t": r.tcid, "con": parsed.constituency,
-                 "party": party_id, "sr": r.sref})
+                 "state": parsed.state, "party": party_id, "sr": r.sref})
             # historical (non-current) party affiliation for this term
             if party_id is not None:
                 s.execute(text(

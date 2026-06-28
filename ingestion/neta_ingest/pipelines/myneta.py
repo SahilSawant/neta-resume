@@ -140,18 +140,18 @@ def _persist_candidate(s, c: ParsedCandidate, *, cycle: str, house: str, raw_rel
     for tbl in ("criminal_case", "affidavit", "office_term", "party_affiliation"):
         s.execute(text(f"DELETE FROM {tbl} WHERE source_ref_id = :sr"), {"sr": source_ref_id})
 
-    # 4) office_term (winner == sitting)
+    # 4) office_term (winner == sitting). ls_state_code = the constituency's state (parsed from MyNeta).
     s.execute(
         text(
             """
             INSERT INTO office_term
-              (person_id, house_id, term_cycle_id, constituency, membership_type,
+              (person_id, house_id, term_cycle_id, constituency, ls_state_code, membership_type,
                party_id, status, source_ref_id)
-            VALUES (:pid, :hid, :tcid, :con, 'elected', :party, :status, :sr)
+            VALUES (:pid, :hid, :tcid, :con, :state, 'elected', :party, :status, :sr)
             """
         ),
-        {"pid": person_id, "hid": house_id, "tcid": term_cycle_id,
-         "con": c.constituency, "party": party_id, "status": term_status, "sr": source_ref_id},
+        {"pid": person_id, "hid": house_id, "tcid": term_cycle_id, "con": c.constituency,
+         "state": c.state, "party": party_id, "status": term_status, "sr": source_ref_id},
     )
 
     # 5) party affiliation for this cycle (current only when this is the latest cycle)

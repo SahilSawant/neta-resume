@@ -1,17 +1,52 @@
 import Link from "next/link";
-import { getPersonResume, photoSrc } from "@/lib/api";
+import { headers } from "next/headers";
+import { getPersonResume, listPersons, photoSrc } from "@/lib/api";
 import { Frame, PhotoBox, PartyPill } from "@/components/ui";
 import { WealthLine } from "@/components/resume/charts";
 import { rupees, attendancePct } from "@/lib/format";
+import { pointToConstituency, REGION_TO_STATE } from "@/lib/geo";
 
-// A real legislator whose profile is shown as the homepage showcase. Override via env if IDs change.
-const SHOWCASE_ID = Number(process.env.NEXT_PUBLIC_SHOWCASE_PERSON_ID ?? 376);
+// Default MP shown when we can't resolve a location (local dev, unknown region). Override via env.
+const DEFAULT_ID = Number(process.env.NEXT_PUBLIC_SHOWCASE_PERSON_ID ?? 376);
 
-/** Live, non-interactive preview of the real resume UI, built from one MP's actual data. */
+/** Pick whom to feature from the visitor's approximate location (Vercel IP geo headers, no prompt). */
+async function resolveFeatured(): Promise<{ id: number; context: string; precise: boolean }> {
+  try {
+    const h = await headers();
+    const lat = parseFloat(h.get("x-vercel-ip-latitude") ?? "");
+    const lng = parseFloat(h.get("x-vercel-ip-longitude") ?? "");
+    // 1) Constituency-precise: IP lat/long → polygon → that constituency's MP.
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      const pc = pointToConstituency(lat, lng);
+      if (pc) {
+        const m = await listPersons({ constituency: pc, limit: 1 });
+        if (m[0]) return { id: m[0].id, context: `Your area’s MP · ${(m[0].constituency ?? pc).toUpperCase()}`, precise: true };
+      }
+    }
+    // 2) State fallback: region code → a random Lok Sabha MP from that state.
+    const region = h.get("x-vercel-ip-country-region");
+    const state = region ? REGION_TO_STATE[region.toUpperCase()] : undefined;
+    if (state) {
+      const list = await listPersons({ state, limit: 80 });
+      const ls = list.filter((p) => p.current_house === "Lok Sabha");
+      const pool = ls.length ? ls : list;
+      if (pool.length) {
+        const pick = pool[Math.floor(Math.random() * pool.length)];
+        return { id: pick.id, context: `An MP from ${state}`, precise: false };
+      }
+    }
+  } catch {
+    /* headers/geo unavailable (e.g. local dev) — fall through to default */
+  }
+  return { id: DEFAULT_ID, context: "Every legislator gets a resume like this", precise: false };
+}
+
+/** Live, non-interactive preview of the real resume UI, built from a nearby MP's actual data. */
 export async function HomePreview() {
+  const { id, context, precise } = await resolveFeatured();
   let resume = null;
   try {
-    resume = await getPersonResume(SHOWCASE_ID);
+    resume = (await getPersonResume(id)) ?? (id !== DEFAULT_ID ? await getPersonResume(DEFAULT_ID) : null);
   } catch {
     return null;
   }
@@ -32,8 +67,15 @@ export async function HomePreview() {
 
   return (
     <section style={{ padding: "8px 48px 64px", maxWidth: 1080, margin: "0 auto", width: "100%" }}>
-      <div className="mono" style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--faint)", marginBottom: 16 }}>
-        Every legislator gets a resume like this
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
+        <div className="mono" style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--faint)" }}>
+          {context}
+        </div>
+        {precise && (
+          <Link href="/directory" className="navlink" style={{ fontSize: 11, color: "var(--muted)" }}>
+            not your MP? search →
+          </Link>
+        )}
       </div>
       <Frame url={`neta-resume.app/person/${resume.id}`}>
         <div style={{ padding: 22 }}>
