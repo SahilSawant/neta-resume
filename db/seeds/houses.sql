@@ -23,8 +23,11 @@ FROM (VALUES
     -- (MH_VS2009 deferred — not at MyNeta's per-election URL scheme.)
     ('MH_VS', 14, DATE '2019-10-24', DATE '2024-11-22', 'MH_VS2019'),
     ('MH_VS', 13, DATE '2014-10-19', DATE '2019-10-23', 'MH_VS2014'),
-    -- Municipal Corporation of Delhi — elected Dec 2022.
-    ('DL_MCD', 1, DATE '2022-12-07', NULL,            'DL_MCD2022')
+    -- Municipal Corporation of Delhi — number = election year (2022 unified; 2017/2012 trifurcated MCDs,
+    -- merged per MyNeta site). 2007 deferred (not on MyNeta).
+    ('DL_MCD', 2022, DATE '2022-12-07', NULL,            'DL_MCD2022'),
+    ('DL_MCD', 2017, DATE '2017-04-26', DATE '2022-12-06', 'DL_MCD2017'),
+    ('DL_MCD', 2012, DATE '2012-04-17', DATE '2017-04-25', 'DL_MCD2012')
 ) AS v(house_code, number, start_date, end_date, eci_election_id)
 JOIN house h ON h.code = v.house_code
 ON CONFLICT (house_id, number) DO NOTHING;
