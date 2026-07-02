@@ -45,6 +45,35 @@ ASSEMBLIES: tuple[Assembly, ...] = (
         Cycle("TN_VS2016", 2016, "2016-05-19", "2021-05-01", "https://www.myneta.info/TamilNadu2016"),
         Cycle("TN_VS2011", 2011, "2011-05-13", "2016-05-18", "https://www.myneta.info/TamilNadu2011"),
     )),
+    # Batch 1 — the largest remaining states (URLs verified live; 2013-era gaps omitted, not faked).
+    Assembly("MP_VS", "Madhya Pradesh Vidhan Sabha", "MP", (
+        Cycle("MP_VS2023", 2023, "2023-12-03", None,         "https://www.myneta.info/MadhyaPradesh2023"),
+        Cycle("MP_VS2018", 2018, "2018-12-11", "2023-12-02", "https://www.myneta.info/MadhyaPradesh2018"),
+    )),
+    Assembly("WB_VS", "West Bengal Legislative Assembly", "WB", (
+        Cycle("WB_VS2021", 2021, "2021-05-02", None,         "https://www.myneta.info/WestBengal2021"),
+        Cycle("WB_VS2016", 2016, "2016-05-19", "2021-05-01", "https://www.myneta.info/WestBengal2016"),
+        Cycle("WB_VS2011", 2011, "2011-05-13", "2016-05-18", "https://www.myneta.info/WestBengal2011"),
+    )),
+    Assembly("BR_VS", "Bihar Vidhan Sabha", "BR", (
+        Cycle("BR_VS2020", 2020, "2020-11-10", None,         "https://www.myneta.info/Bihar2020"),
+        Cycle("BR_VS2015", 2015, "2015-11-08", "2020-11-09", "https://www.myneta.info/Bihar2015"),
+    )),
+    Assembly("KA_VS", "Karnataka Legislative Assembly", "KA", (
+        Cycle("KA_VS2023", 2023, "2023-05-13", None,         "https://www.myneta.info/Karnataka2023"),
+        Cycle("KA_VS2018", 2018, "2018-05-15", "2023-05-12", "https://www.myneta.info/Karnataka2018"),
+        Cycle("KA_VS2013", 2013, "2013-05-08", "2018-05-14", "https://www.myneta.info/Karnataka2013"),
+    )),
+    Assembly("RJ_VS", "Rajasthan Vidhan Sabha", "RJ", (
+        Cycle("RJ_VS2023", 2023, "2023-12-03", None,         "https://www.myneta.info/Rajasthan2023"),
+        Cycle("RJ_VS2018", 2018, "2018-12-11", "2023-12-02", "https://www.myneta.info/Rajasthan2018"),
+        Cycle("RJ_VS2013", 2013, "2013-12-08", "2018-12-10", "https://www.myneta.info/Rajasthan2013"),
+    )),
+    Assembly("GJ_VS", "Gujarat Vidhan Sabha", "GJ", (
+        Cycle("GJ_VS2022", 2022, "2022-12-08", None,         "https://www.myneta.info/Gujarat2022"),
+        Cycle("GJ_VS2017", 2017, "2017-12-18", "2022-12-07", "https://www.myneta.info/Gujarat2017"),
+        Cycle("GJ_VS2012", 2012, "2012-12-20", "2017-12-17", "https://www.myneta.info/Gujarat2012"),
+    )),
 )
 
 
