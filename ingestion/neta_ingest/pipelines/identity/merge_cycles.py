@@ -17,9 +17,11 @@ from sqlalchemy import text
 from neta_core.db.engine import session_scope
 
 # Person-scoped tables whose rows must move from the merged-away person to the survivor.
+# (Keep in sync with _prune_non_current's delete list + every table carrying a person_id FK.)
 _PERSON_TABLES = (
     "person_name_variant", "source_ref", "office_term", "cabinet_post", "role",
     "party_affiliation", "party_switch_event", "affidavit", "criminal_case",
+    "news_item", "contact",
 )
 
 
@@ -85,6 +87,18 @@ def _merge(s, old_id: int, new_id: int) -> None:
                   AND n.source_id IS NOT DISTINCT FROM o.source_id)
             """
         ),
+        {"old": old_id, "new": new_id},
+    )
+    # Drop old-side rows that would collide with the survivor's UNIQUE keys before repointing:
+    #   contact   UNIQUE(person_id, channel_type, value)   ·   news_item UNIQUE(person_id, url)
+    s.execute(
+        text("DELETE FROM contact o WHERE o.person_id = :old AND EXISTS (SELECT 1 FROM contact n "
+             "WHERE n.person_id = :new AND n.channel_type = o.channel_type AND n.value = o.value)"),
+        {"old": old_id, "new": new_id},
+    )
+    s.execute(
+        text("DELETE FROM news_item o WHERE o.person_id = :old AND EXISTS (SELECT 1 FROM news_item n "
+             "WHERE n.person_id = :new AND n.url = o.url)"),
         {"old": old_id, "new": new_id},
     )
     for tbl in _PERSON_TABLES:
@@ -156,7 +170,8 @@ def _prune_non_current(s) -> int:
     for pid in ids:
         # criminal_case -> case_charge and affidavit -> line_item cascade on delete.
         for tbl in ("criminal_case", "affidavit", "office_term", "cabinet_post", "role",
-                    "party_affiliation", "party_switch_event", "person_name_variant", "source_ref"):
+                    "party_affiliation", "party_switch_event", "news_item", "contact",
+                    "person_name_variant", "source_ref"):
             s.execute(text(f"DELETE FROM {tbl} WHERE person_id = :p"), {"p": pid})
         s.execute(text("DELETE FROM person WHERE id = :p"), {"p": pid})
     return len(ids)
