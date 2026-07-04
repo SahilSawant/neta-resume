@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { OG_LOGO_DATA_URI } from "./og-logo-data";
 
 export const alt = "Neta·Resume — the public record of every Indian legislator";
 export const size = { width: 1200, height: 630 };
@@ -7,10 +8,8 @@ export const contentType = "image/png";
 // Branded social-share card, generated at build/request time.
 // Note: keep to Latin glyphs only — exotic glyphs trigger a dynamic font fetch; and every element with
 // more than one child must set display:flex (Satori requirement). The logo's cap is a raster inside its
-// SVG, which Satori can't render, so we embed the PNG as a data-URI instead.
-export default async function OpengraphImage() {
-  const logo = await fetch(new URL("./og-logo.png", import.meta.url)).then((r) => r.arrayBuffer());
-  const logoSrc = `data:image/png;base64,${Buffer.from(logo).toString("base64")}`;
+// SVG, which Satori can't render, so we embed the PNG as a pre-encoded base64 data-URI (OG_LOGO_DATA_URI).
+export default function OpengraphImage() {
   return new ImageResponse(
     (
       <div
@@ -33,7 +32,7 @@ export default async function OpengraphImage() {
             }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img width="52" height="52" src={logoSrc} alt="" />
+            <img width="52" height="52" src={OG_LOGO_DATA_URI} alt="" />
           </div>
           <div style={{ display: "flex", fontSize: 30, fontWeight: 700, color: "#121317", marginLeft: 18 }}>
             Neta-Resume
