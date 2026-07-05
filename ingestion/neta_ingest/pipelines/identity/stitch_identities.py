@@ -108,6 +108,20 @@ def _json(d: dict) -> str:
     return json.dumps(d)
 
 
+def _fmt(sig: dict, lo: int, hi: int, score: float, ev: dict, survivor: int | None = None) -> str:
+    """One human-readable line for a candidate pair (dry-run listing)."""
+    a, b = sig[lo], sig[hi]
+    rel = ev.get("relative")
+    relstr = (f"rel≈{rel['a']}" if rel and rel.get("sim", 0) >= 0.85
+              else ("rel-MISMATCH" if rel else "rel—"))
+    bev, sev = ev.get("birth"), ev.get("state")
+    bstr = f"b{bev['a']}/{bev['b']}" if bev else "b—"
+    sstr = sev["a"] if sev and sev.get("match") else "state—"
+    tag = f"  → keep #{survivor}" if survivor else ""
+    return (f"    {score:.3f}  {a['display_name']} (#{lo}) ↔ {b['display_name']} (#{hi})  "
+            f"[{relstr}; {bstr}; {sstr}]{tag}")
+
+
 def run(dry_run: bool = False, limit: int = 0) -> None:
     with session_scope() as s:
         pairs = _candidate_pairs(s, limit)
@@ -117,6 +131,8 @@ def run(dry_run: bool = False, limit: int = 0) -> None:
 
         bands: dict[str, int] = defaultdict(int)
         scored: list[tuple[int, int, float, dict]] = []   # auto_merge candidates
+        reviews: list[tuple[int, int, float, dict]] = []   # review candidates (for the dry-run listing)
+        automerges: list[tuple] = []                       # (lo, hi, score, ev, survivor) — final auto set
         for id1, id2 in pairs:
             lo, hi = (id1, id2) if id1 < id2 else (id2, id1)
             if (lo, hi) in decided:
@@ -131,6 +147,7 @@ def run(dry_run: bool = False, limit: int = 0) -> None:
             if band == "reject":
                 continue
             if band == "review":
+                reviews.append((lo, hi, score, ev))
                 _upsert_candidate(s, lo, hi, score, band, ev, status="pending", decided_by=None)
             else:  # auto_merge
                 scored.append((lo, hi, score, ev))
@@ -146,13 +163,14 @@ def run(dry_run: bool = False, limit: int = 0) -> None:
             if seen[lo] > 1 or seen[hi] > 1:
                 ambiguous += 1
                 ev["note"] = "ambiguous: person in multiple auto-merge pairs -> review"
-                _upsert_candidate(s, lo, hi, score, ev.get("_band", "review"), ev,
-                                  status="pending", decided_by=None)
+                reviews.append((lo, hi, score, ev))
+                _upsert_candidate(s, lo, hi, score, "review", ev, status="pending", decided_by=None)
                 continue
             # survivor = the person with the more-recent latest term (keeps the current identity).
             a, b = sig[lo], sig[hi]
             survivor, loser = (lo, hi) if (a["latest_term"] or "") >= (b["latest_term"] or "") else (hi, lo)
             remap[loser] = survivor
+            automerges.append((lo, hi, score, ev, survivor))
             _upsert_candidate(s, lo, hi, score, "auto_merge", ev, status="auto_merged", decided_by="auto")
             auto_done += 1
 
@@ -160,6 +178,14 @@ def run(dry_run: bool = False, limit: int = 0) -> None:
             s.rollback()
             print(f"[stitch] DRY RUN — bands: {dict(bands)}; would auto-merge {auto_done} "
                   f"({ambiguous} demoted to review).")
+            if automerges:
+                print(f"[stitch] {len(automerges)} AUTO-MERGE candidate(s):")
+                for lo, hi, sc, ev, surv in sorted(automerges, key=lambda x: -x[2]):
+                    print(_fmt(sig, lo, hi, sc, ev, surv))
+            if reviews:
+                print(f"[stitch] {len(reviews)} REVIEW candidate(s):")
+                for lo, hi, sc, ev in sorted(reviews, key=lambda x: -x[2]):
+                    print(_fmt(sig, lo, hi, sc, ev))
             return
 
         merged = merge_cycles._merge(s, remap) if remap else 0
