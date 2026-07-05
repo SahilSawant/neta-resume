@@ -134,19 +134,23 @@ def review_show(candidate_id: int) -> None:
 
 
 @review_app.command("accept")
-def review_accept(candidate_id: int, by: str = "cli") -> None:
-    """Accept a candidate -> merge the two persons."""
+def review_accept(candidate_ids: list[int] = typer.Argument(..., help="one or more candidate ids"),
+                  by: str = "cli") -> None:
+    """Accept one or more candidates -> merge each pair."""
     from neta_ingest.pipelines.identity import review
 
-    review.accept(candidate_id, by=by)
+    for cid in candidate_ids:
+        review.accept(cid, by=by)
 
 
 @review_app.command("reject")
-def review_reject(candidate_id: int, by: str = "cli", reason: str = "") -> None:
-    """Reject a candidate -> suppress it from future proposals."""
+def review_reject(candidate_ids: list[int] = typer.Argument(..., help="one or more candidate ids"),
+                  by: str = "cli", reason: str = "") -> None:
+    """Reject one or more candidates -> suppress them from future proposals."""
     from neta_ingest.pipelines.identity import review
 
-    review.reject(candidate_id, by=by, reason=reason or None)
+    for cid in candidate_ids:
+        review.reject(cid, by=by, reason=reason or None)
 
 
 @app.command(name="enrich-missing")
