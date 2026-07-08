@@ -17,12 +17,44 @@ from collections import defaultdict
 from sqlalchemy import text
 
 from neta_core.db.engine import session_scope
+from neta_core.transform.names import normalize_name
 from neta_ingest.pipelines.identity import merge_cycles
 from neta_ingest.pipelines.identity import derive_identity_signals
-from neta_ingest.pipelines.identity.stitch_score import AUTO_MERGE_SCORE, RULE_VERSION, score_person_pair
+from neta_ingest.pipelines.identity.affidavit_attach import name_score
+from neta_ingest.pipelines.identity.stitch_score import (
+    AUTO_MERGE_SCORE,
+    REL_MATCH,
+    RULE_VERSION,
+    score_person_pair,
+)
 
 # Trigram floor for BLOCKING only (cheap superset); stitch_score's NAME_FLOOR (0.85) does the real gate.
 _BLOCK_SIMILARITY = 0.5
+
+
+def _hard_negative(a: dict, b: dict) -> bool:
+    """A cheap, high-confidence 'different people' pre-filter for blocking (authoritative twin of the
+    SQL band in `_candidate_pairs`).
+
+    True ONLY when both `home_state`s are known and differ AND nothing cheap ties the pair together
+    (no equal birth-year, no matching relative). It is null-tolerant: any missing signal -> not a hard
+    negative -> the pair is KEPT, so signal-poor records (municipal, old backfill) are never dropped
+    here. A genuine state->national mover rises within their own state (same home_state -> kept); the
+    rare cross-state mover is recovered by a shared birth-year or relative. What this removes is the
+    dominant explosion term at scale: known-different-state common-name namesakes with no corroboration
+    — pairs the scorer would reject anyway, cut one stage earlier so they never get scored or queued.
+    """
+    sa = (a.get("home_state") or "").strip().upper()
+    sb = (b.get("home_state") or "").strip().upper()
+    if not sa or not sb or sa == sb:
+        return False                                   # unknown or same state -> keep
+    ba, bb = a.get("birth_year"), b.get("birth_year")
+    if ba is not None and bb is not None and int(ba) == int(bb):
+        return False                                   # same birth year -> could be the mover -> keep
+    ra, rb = a.get("relative_name"), b.get("relative_name")
+    if ra and rb and name_score(ra, rb, normalize_name(ra)) >= REL_MATCH:
+        return False                                   # same father/spouse -> keep
+    return True                                        # different state, nothing ties them -> drop
 
 
 def _candidate_pairs(s, limit: int) -> list[tuple[int, int]]:
@@ -35,6 +67,19 @@ def _candidate_pairs(s, limit: int) -> list[tuple[int, int]]:
          AND p1.normalized_name <> '' AND p2.normalized_name <> ''
          AND (p1.normalized_name % p2.normalized_name          -- pg_trgm, uses the GIN index
               OR (p1.phonetic_key = p2.phonetic_key AND p1.phonetic_key <> ''))  -- same-sound (metaphone)
+         -- Recall-safe geography band: drop only a known-hard-negative — both home_states known and
+         -- different, with no cheap tie (equal birth-year or trigram-similar relative). Null-tolerant
+         -- (a missing signal keeps the pair) so signal-poor records survive; the relative recovery uses
+         -- a LOOSE trigram bar so this SQL cut never drops more than `_hard_negative` (authoritative).
+         AND NOT (
+              p1.home_state IS NOT NULL AND p1.home_state <> ''
+              AND p2.home_state IS NOT NULL AND p2.home_state <> ''
+              AND upper(p1.home_state) <> upper(p2.home_state)
+              AND (p1.birth_year IS NULL OR p2.birth_year IS NULL OR p1.birth_year <> p2.birth_year)
+              AND (p1.relative_name IS NULL OR p2.relative_name IS NULL
+                   OR p1.relative_name = '' OR p2.relative_name = ''
+                   OR NOT (p1.relative_name % p2.relative_name))
+         )
         WHERE EXISTS (
             SELECT 1 FROM office_term o1
             JOIN office_term o2 ON o2.person_id = p2.id AND o2.house_id <> o1.house_id
@@ -69,17 +114,20 @@ def _load_signals(s, ids: list[int]) -> dict[int, dict]:
 
 
 def _decided_pairs(s) -> set[tuple[int, int]]:
-    """Pairs already handled: human rejects (suppressed at this rule_version) + completed merges."""
+    """Pairs already handled: completed merges + human rejects.
+
+    A `rejected` row is ALWAYS a human decision (auto-rejects, band=reject, are dropped, never stored),
+    so it is suppressed permanently — independent of `rule_version`. A scorer-version bump therefore
+    re-opens no human 'these are different people' verdict (e.g. the Hitnal brothers stay rejected).
+    """
     rows = s.execute(
         text(
             """
             SELECT person_lo, person_hi FROM person_merge_candidate
             WHERE person_lo IS NOT NULL AND person_hi IS NOT NULL
-              AND (status IN ('accepted', 'auto_merged')
-                   OR (status = 'rejected' AND rule_version = :rv))
+              AND status IN ('accepted', 'auto_merged', 'rejected')
             """
-        ),
-        {"rv": RULE_VERSION},
+        )
     )
     return {(r.person_lo, r.person_hi) for r in rows}
 
@@ -208,6 +256,9 @@ def run(dry_run: bool = False, limit: int = 0, audit: bool = False) -> None:
                 continue
             a, b = sig.get(id1), sig.get(id2)
             if not a or not b:
+                continue
+            if _hard_negative(a, b):     # cross-state namesake, no corroboration — never a real merge
+                bands["blocked"] += 1
                 continue
             score, band, ev = score_person_pair(a, b)
             ev["pair"] = [lo, hi]
