@@ -1,8 +1,49 @@
-"""Chain-aware merge: union-find + clique verification in _resolve_components (pure, no DB)."""
+"""Chain-aware merge: union-find + clique verification in _resolve_components (pure, no DB).
+
+Also covers `_hard_negative` — the recall-safe geography band that pre-filters cross-state namesakes
+before scoring (twin of the SQL band in `_candidate_pairs`).
+"""
 
 from neta_core.transform.names import normalize_name
 
-from neta_ingest.pipelines.identity.stitch_identities import _resolve_components
+from neta_ingest.pipelines.identity.stitch_identities import _hard_negative, _resolve_components
+
+
+def _p(state=None, birth=None, rel=None):
+    return {"home_state": state, "birth_year": birth, "relative_name": rel}
+
+
+class TestHardNegative:
+    def test_same_state_kept(self):
+        assert _hard_negative(_p("BIHAR"), _p("BIHAR")) is False
+
+    def test_cross_state_no_corroboration_dropped(self):
+        # Two "Ram Kumar"s in different states with nothing tying them -> a hard negative.
+        assert _hard_negative(_p("ANDHRA PRADESH"), _p("TAMIL NADU")) is True
+
+    def test_null_state_is_kept(self):
+        # Signal-poor record (municipal / old backfill): unknown state must never be dropped here.
+        assert _hard_negative(_p(None, birth=1970), _p("TAMIL NADU", birth=1985)) is False
+        assert _hard_negative(_p("", ), _p("TAMIL NADU")) is False
+
+    def test_cross_state_same_birth_year_recovered(self):
+        # MLA in one state -> RS from another: same person, same birth year -> keep for scoring.
+        assert _hard_negative(_p("KARNATAKA", birth=1962), _p("MAHARASHTRA", birth=1962)) is False
+
+    def test_cross_state_matching_relative_recovered(self):
+        assert _hard_negative(
+            _p("KARNATAKA", rel="Basavaraj Hitnal"), _p("MAHARASHTRA", rel="Basavaraj Hitnal")
+        ) is False
+
+    def test_cross_state_conflicting_signals_dropped(self):
+        # Different states, different birth years, different fathers -> confidently different people.
+        assert _hard_negative(
+            _p("KARNATAKA", birth=1962, rel="Shyam Singh"),
+            _p("MAHARASHTRA", birth=1985, rel="Mohan Yadav"),
+        ) is True
+
+    def test_state_comparison_case_insensitive(self):
+        assert _hard_negative(_p("Bihar"), _p("bihar")) is False
 
 
 def person(name, birth, state, rel, latest, gender=None, parties=(1,)):
