@@ -1,5 +1,6 @@
 """Human review of the cross-house merge queue (person_merge_candidate).
-`accept` merges the pair (via merge_cycles._merge); `reject` suppresses it. Backing `neta review …`.
+`add` queues an arbitrary pair; `accept` merges the pair (via merge_cycles._merge); `reject` suppresses
+it. Backing `neta review …`.
 """
 
 from __future__ import annotations
@@ -10,6 +11,42 @@ from sqlalchemy import text
 
 from neta_core.db.engine import session_scope
 from neta_ingest.pipelines.identity import derive_identity_signals, merge_cycles
+from neta_ingest.pipelines.identity import stitch_identities as si
+from neta_ingest.pipelines.identity.stitch_score import score_person_pair
+
+
+def add(a: int, b: int, by: str = "cli") -> None:
+    """Force a specific person pair into the review queue as 'pending'.
+
+    For an audit near-miss the scorer put just below threshold (name variance + a weak signal on a
+    genuine mover, e.g. an ex-CM whose assembly record dropped a surname) — score it for the evidence
+    trail, then queue it regardless of band so a human can `show` + `accept`. A prior human *reject* of
+    the same pair is respected: the underlying upsert only overwrites a still-'pending' row, so a
+    settled 'rejected'/'accepted'/'auto_merged' decision is never silently re-opened.
+    """
+    lo, hi = (a, b) if a < b else (b, a)
+    if lo == hi:
+        print("[review] a pair needs two distinct person ids.")
+        return
+    with session_scope() as s:
+        sig = si._load_signals(s, [lo, hi])
+        missing = [i for i in (lo, hi) if i not in sig]
+        if missing:
+            print(f"[review] no such person id(s): {missing}.")
+            return
+        score, band, ev = score_person_pair(sig[lo], sig[hi])
+        ev["pair"] = [lo, hi]
+        ev["queued_by"] = by                      # audit: this pair was queued by hand, not the scorer
+        si._upsert_candidate(s, lo, hi, score, band, ev, status="pending", decided_by=None)
+        row = s.execute(
+            text("SELECT id, status FROM person_merge_candidate WHERE person_lo=:lo AND person_hi=:hi"),
+            {"lo": lo, "hi": hi},
+        ).mappings().first()
+    if row and row["status"] == "pending":
+        print(f"[review] queued #{lo} <-> #{hi} as candidate #{row['id']} "
+              f"(score={round(score, 4)}, band={band}).  inspect: neta review show {row['id']}")
+    else:
+        print(f"[review] #{lo} <-> #{hi} already decided ({row['status'] if row else '??'}) — not re-opened.")
 
 
 def list_pending(limit: int = 30) -> None:

@@ -118,6 +118,14 @@ review_app = typer.Typer(help="Review the cross-house merge queue (person_merge_
 app.add_typer(review_app, name="review")
 
 
+@review_app.command("add")
+def review_add(person_id_a: int, person_id_b: int, by: str = "cli") -> None:
+    """Queue a specific person pair for review (e.g. an audit near-miss below the scorer threshold)."""
+    from neta_ingest.pipelines.identity import review
+
+    review.add(person_id_a, person_id_b, by=by)
+
+
 @review_app.command("list")
 def review_list(limit: int = 30) -> None:
     """List pending merge candidates, highest score first."""
