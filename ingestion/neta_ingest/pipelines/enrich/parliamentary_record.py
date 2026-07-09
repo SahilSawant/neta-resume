@@ -125,20 +125,22 @@ def run(house: str = "ls") -> None:
             )
             s.execute(text("UPDATE source_ref SET person_id = :pid WHERE id = :sr"),
                       {"pid": person_id, "sr": source_ref_id})
-            for q in questions:
-                s.execute(_Q_UPSERT, {
+            # Batch all of a member's rows into one executemany each — psycopg3 pipelines it, so this is
+            # ~2 round-trips per member instead of ~130 (decisive over a US-runner -> Singapore-Neon hop).
+            if questions:
+                s.execute(_Q_UPSERT, [{
                     "pid": person_id, "hid": house_id, "tcid": term_cycle_id, "ref": q.question_ref,
                     "subject": q.subject, "ministry": q.ministry, "qtype": q.question_type,
                     "adate": q.asked_date, "url": q.document_url, "sr": source_ref_id,
-                })
-                q_written += 1
-            for d in debates:
-                s.execute(_D_UPSERT, {
+                } for q in questions])
+                q_written += len(questions)
+            if debates:
+                s.execute(_D_UPSERT, [{
                     "pid": person_id, "hid": house_id, "tcid": term_cycle_id, "ref": d.debate_ref,
                     "title": d.title, "dtype": d.debate_type, "ddate": d.debate_date,
                     "url": d.document_url, "sr": source_ref_id,
-                })
-                d_written += 1
+                } for d in debates])
+                d_written += len(debates)
 
     print(f"[record] done: {q_written} questions + {d_written} debates upserted across "
           f"{len(matched) - failed - no_items} members; {no_items} with none listed, {failed} fetch-failed")
