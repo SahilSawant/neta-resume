@@ -396,6 +396,8 @@ export interface components {
             subject?: string | null;
             /** Ministry */
             ministry?: string | null;
+            /** Theme */
+            theme?: string | null;
             /** Question Type */
             question_type?: string | null;
             /** Asked Date */

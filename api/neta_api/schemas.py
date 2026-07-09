@@ -135,9 +135,10 @@ class ParliamentaryActivity(BaseModel):
 class ParliamentaryQuestion(BaseModel):
     subject: str | None = None
     ministry: str | None = None
+    theme: str | None = None           # policy theme (from ministry_theme map); for grouping/filtering
     question_type: str | None = None   # 'Starred' | 'Unstarred'
     asked_date: date | None = None
-    document_url: str | None = None    # official sansad.in question PDF
+    document_url: str | None = None    # official sansad.in question PDF (= the ministry's reply)
 
 
 class ParliamentaryDebate(BaseModel):

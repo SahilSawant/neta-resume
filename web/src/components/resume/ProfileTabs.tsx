@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { PersonResume, ThemeFocus } from "@/lib/api";
+import type { PersonResume, ParliamentaryQuestion, ThemeFocus } from "@/lib/api";
 import { rupees, severityMeta, year, pretty } from "@/lib/format";
 import { Donut, WealthLine } from "@/components/resume/charts";
 import { SourceLink, SourceChip, PendingFlag, SeverityBadge, PartyPill } from "@/components/ui";
@@ -218,74 +218,112 @@ const THEME_COLORS: Record<string, string> = {
   "Other": "var(--muted)",
 };
 
-// The "Policy focus" meter: what policy areas this MP raises (from the ministry each question addresses),
-// each theme's share of their questions drawn as a bar, with the Lok Sabha average marked as a tick.
-function PolicyFocus({ focus, total }: { focus: ThemeFocus[]; total: number }) {
-  if (total < 8) return <Muted>Too few questions to chart a reliable focus.</Muted>;
-  if (!focus?.length) return null;
-  const scale = Math.max(...focus.map((t) => Math.max(t.share, t.house_share ?? 0)), 0.01);
-  const hasHouse = focus.some((t) => t.house_share != null);
+function themeColor(theme: string | null | undefined): string {
+  return THEME_COLORS[theme ?? "Other"] ?? "var(--muted)";
+}
+
+// A single stacked bar of the theme mix; clicking a segment toggles the filter (synced with the chips).
+function SegmentedBar({ focus, selected, onSelect }: { focus: ThemeFocus[]; selected: string | null; onSelect: (t: string | null) => void }) {
   return (
-    <div style={{ marginTop: 14 }}>
-      <div style={{ display: "grid", gap: 11 }}>
-        {focus.map((t) => {
-          const color = THEME_COLORS[t.theme] ?? "var(--muted)";
-          const ratio = t.house_share && t.house_share > 0 ? t.share / t.house_share : null;
-          return (
-            <div key={t.theme}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 5 }}>
-                <span style={{ fontSize: 13, color: "var(--ink)" }}>{t.theme}</span>
-                <span className="mono" style={{ fontSize: 12, color: "var(--muted)" }}>
-                  {Math.round(t.share * 100)}%{ratio ? ` · ${ratio.toFixed(1)}× avg` : ""}
-                </span>
-              </div>
-              <div style={{ position: "relative", height: 9, borderRadius: 5, background: "var(--rule)", overflow: "hidden" }}>
-                <div style={{ position: "absolute", inset: 0, width: `${(t.share / scale) * 100}%`, background: color, borderRadius: 5 }} />
-                {t.house_share != null && (
-                  <div title={`Lok Sabha average ${Math.round(t.house_share * 100)}%`}
-                    style={{ position: "absolute", top: -2, bottom: -2, left: `${(t.house_share / scale) * 100}%`, width: 2, background: "var(--ink)" }} />
-                )}
-              </div>
-            </div>
-          );
-        })}
+    <div style={{ display: "flex", height: 16, borderRadius: 8, overflow: "hidden", background: "var(--rule)" }}>
+      {focus.map((t) => {
+        const active = selected === null || selected === t.theme;
+        return (
+          <button key={t.theme} title={`${t.theme} — ${Math.round(t.share * 100)}%`} aria-label={`${t.theme} ${Math.round(t.share * 100)} percent`}
+            onClick={() => onSelect(selected === t.theme ? null : t.theme)}
+            style={{ width: `${t.share * 100}%`, background: themeColor(t.theme), opacity: active ? 1 : 0.28,
+              border: "none", borderRight: "1px solid var(--card)", cursor: "pointer", padding: 0, transition: "opacity .2s" }} />
+        );
+      })}
+    </div>
+  );
+}
+
+function ThemeChip({ label, count, color, active, onClick }: { label: string; count: number; color?: string; active: boolean; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="tap"
+      style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, padding: "4px 11px", borderRadius: 20, cursor: "pointer",
+        border: `1px solid ${active ? "var(--accent)" : "var(--rule)"}`, background: active ? "var(--accent-soft)" : "var(--card)",
+        color: active ? "var(--accent-soft-fg)" : "var(--ink2)" }}>
+      {color && <span style={{ width: 8, height: 8, borderRadius: 8, background: color, display: "inline-block" }} />}
+      {label} <span className="mono" style={{ color: active ? "var(--accent-soft-fg)" : "var(--muted)" }}>{count}</span>
+    </button>
+  );
+}
+
+function QuestionCard({ q }: { q: ParliamentaryQuestion }) {
+  const reply = q.question_type === "Starred" ? "Oral reply" : q.question_type === "Unstarred" ? "Written reply" : "Reply";
+  const meta = [q.theme, q.ministry].filter(Boolean).join(" · ");
+  return (
+    <div style={cardStyle} className="liftsm">
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
+        <span style={{ ...headStyle, fontSize: 14, lineHeight: 1.35 }}>{q.subject || "Question"}</span>
+        <span className="mono" style={{ fontSize: 11, color: "var(--muted)", whiteSpace: "nowrap" }}>{isoDate(q.asked_date)}</span>
       </div>
-      {hasHouse && (
-        <div className="mono" style={{ fontSize: 10, color: "var(--faint)", marginTop: 10 }}>
-          Bar = share of this member’s questions · ▏ marks the Lok Sabha average
-        </div>
-      )}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 11, color: "var(--muted)" }}>
+          <span style={{ width: 8, height: 8, borderRadius: 2, background: themeColor(q.theme), display: "inline-block" }} />
+          {meta}
+        </span>
+        {q.document_url && (
+          <a href={q.document_url} target="_blank" rel="noreferrer" className="btnGhost mono"
+            style={{ fontSize: 11, padding: "3px 11px", borderRadius: 8, marginLeft: "auto" }}>
+            {reply} →
+          </a>
+        )}
+      </div>
     </div>
   );
 }
 
 function Questions({ resume }: { resume: PersonResume }) {
   const pr = resume.parliamentary_record;
+  const [theme, setTheme] = useState<string | null>(null);
   if (!pr) return <Muted>No questions or debates on record.</Muted>;
   const sectionHead: React.CSSProperties = { ...headStyle, fontSize: 15, display: "flex", alignItems: "center", gap: 10, margin: "22px 0 12px" };
+  const focus = pr.thematic_focus ?? [];
+  const showFocus = pr.questions_count >= 8 && focus.length > 0;
+  const shown = theme ? pr.questions.filter((q) => q.theme === theme) : pr.questions;
+  const sel = theme ? focus.find((t) => t.theme === theme) : null;
+  const ratio = sel && sel.house_share && sel.house_share > 0 ? sel.share / sel.house_share : null;
   return (
     <div className="fadeUp">
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 6 }}>
         <span style={headStyle}>Questions &amp; debates — {pr.house}</span>
         <span className="mono" style={{ fontSize: 11, color: "var(--faint)" }}>PRS · DIGITAL SANSAD</span>
       </div>
-      <Muted>Individual matters this member raised in the House — each links the official Lok Sabha document.</Muted>
+      <Muted>What this member raises in the House, by policy area — each links the official Lok Sabha reply.</Muted>
 
-      <div style={{ ...sectionHead, marginTop: 20 }}><span>Policy focus</span>
-        <span className="mono" style={{ fontSize: 11, color: "var(--faint)", fontWeight: 400 }}>BY MINISTRY</span>
+      {showFocus && (
+        <>
+          <div style={{ ...sectionHead, marginTop: 20 }}><span>Policy focus</span>
+            <span className="mono" style={{ fontSize: 11, color: "var(--faint)", fontWeight: 400 }}>BY MINISTRY</span>
+          </div>
+          <SegmentedBar focus={focus} selected={theme} onSelect={setTheme} />
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 13 }}>
+            <ThemeChip label="All" count={pr.questions_count} active={theme === null} onClick={() => setTheme(null)} />
+            {focus.map((t) => (
+              <ThemeChip key={t.theme} label={t.theme} count={t.count} color={themeColor(t.theme)}
+                active={theme === t.theme} onClick={() => setTheme(theme === t.theme ? null : t.theme)} />
+            ))}
+          </div>
+          {sel && (
+            <div style={{ marginTop: 12 }}>
+              <Muted>{sel.theme} — {Math.round(sel.share * 100)}% of questions{ratio ? ` · ${ratio.toFixed(1)}× the Lok Sabha average` : ""}.</Muted>
+            </div>
+          )}
+        </>
+      )}
+
+      <div style={sectionHead}>
+        <span>{theme ?? "Questions asked"}</span><CountChip n={shown.length} />
       </div>
-      <PolicyFocus focus={pr.thematic_focus} total={pr.questions_count} />
-
-      <div style={sectionHead}><span>Questions asked</span><CountChip n={pr.questions_count} /></div>
-      {pr.questions.length === 0 ? <Muted>None listed.</Muted> : (
+      {shown.length === 0 ? <Muted>No questions in this area.</Muted> : (
         <div style={{ display: "grid", gap: 10 }}>
-          {pr.questions.map((q, i) => (
-            <QARow key={i} title={q.subject || "Question"} date={q.asked_date}
-              meta={[q.question_type, q.ministry].filter(Boolean).join(" · ")} url={q.document_url} />
-          ))}
+          {shown.map((q, i) => <QuestionCard key={i} q={q} />)}
         </div>
       )}
-      {pr.questions_count > pr.questions.length && (
+      {pr.questions_count > pr.questions.length && !theme && (
         <Muted>Showing {pr.questions.length} most recent of {pr.questions_count}.</Muted>
       )}
 
