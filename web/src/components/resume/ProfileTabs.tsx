@@ -222,7 +222,7 @@ const THEME_COLORS: Record<string, string> = {
 // each theme's share of their questions drawn as a bar, with the Lok Sabha average marked as a tick.
 function PolicyFocus({ focus, total }: { focus: ThemeFocus[]; total: number }) {
   if (total < 8) return <Muted>Too few questions to chart a reliable focus.</Muted>;
-  if (!focus.length) return null;
+  if (!focus?.length) return null;
   const scale = Math.max(...focus.map((t) => Math.max(t.share, t.house_share ?? 0)), 0.01);
   const hasHouse = focus.some((t) => t.house_share != null);
   return (
