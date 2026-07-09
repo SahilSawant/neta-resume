@@ -111,9 +111,10 @@ def _build_activity(db: Session, person_id: int) -> ParliamentaryActivity | None
     )
 
 
-# The lists are capped so a prolific MP (100s of questions) doesn't bloat the resume payload; the full
-# tallies come from a cheap count(*) so the UI can show "showing N of total" + a hero quick-stat.
-_RECORD_LIST_CAP = 50
+# Cap the returned lists so a prolific MP doesn't bloat the payload — but high enough that the questions
+# list is effectively complete for any LS MP (max ~a few hundred), so the theme filter chips match what the
+# list shows. The full tallies still come from a cheap count(*) for the "showing N of total" note.
+_RECORD_LIST_CAP = 300
 
 # Below this many distinct MPs in the term's question corpus, a "House average" is not yet meaningful
 # (e.g. before the full-house ingest) — we return house_share = None so the UI shows the MP's own mix only.
@@ -194,15 +195,18 @@ def _build_parliamentary_record(db: Session, person_id: int) -> ParliamentaryRec
 
     questions = [
         ParliamentaryQuestion(
-            subject=r.subject, ministry=r.ministry, question_type=r.question_type,
+            subject=r.subject, ministry=r.ministry, theme=r.theme, question_type=r.question_type,
             asked_date=r.asked_date, document_url=r.document_url,
         )
         for r in db.execute(
             text(
                 """
-                SELECT subject, ministry, question_type, asked_date, document_url
-                FROM parliamentary_question WHERE person_id = :pid
-                ORDER BY asked_date DESC NULLS LAST, id DESC
+                SELECT pq.subject, pq.ministry, pq.question_type, pq.asked_date, pq.document_url,
+                       COALESCE(mt.theme, 'Other') AS theme
+                FROM parliamentary_question pq
+                LEFT JOIN ministry_theme mt ON mt.ministry_key = lower(btrim(pq.ministry))
+                WHERE pq.person_id = :pid
+                ORDER BY pq.asked_date DESC NULLS LAST, pq.id DESC
                 LIMIT :cap
                 """
             ),
