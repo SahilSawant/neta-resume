@@ -28,6 +28,7 @@ class OfficeTerm(BaseModel):
     house: str              # 'Lok Sabha'
     cycle_number: int       # 18
     constituency: str | None
+    constituency_pc_id: int | None = None   # matched Lok Sabha constituency (links to its report card)
     state: str | None       # Rajya Sabha members represent a state
     party: str | None
     membership_type: str
@@ -340,3 +341,51 @@ class ThemeFocusBreakdown(BaseModel):
     by: Literal["party", "state"]
     house: str
     groups: list[AggregateGroup]             # ordered by total volume desc
+
+
+# ---- Constituency Report Card ----
+
+class ConstituencySummary(BaseModel):
+    pc_id: int
+    pc_name: str
+    pc_name_hi: str | None = None
+    state_name: str
+    pc_category: str | None = None           # GEN | SC | ST
+
+
+class IndicatorComparison(BaseModel):
+    """One indicator's value vs its state + national average, with a neutral percentile. Missing ≠ zero:
+    a null value means unmatched/unreported, not a value of zero. Descriptive, never a ranking of merit."""
+    value: float | None = None
+    state_avg: float | None = None
+    national_avg: float | None = None
+    percentile: float | None = None          # share of constituencies with a value ≤ this one (0–100)
+    coverage: int = 0                         # how many constituencies had data for this indicator
+
+
+class NearbyConstituency(BaseModel):
+    pc_id: int
+    pc_name: str
+    state_name: str
+    mp_name: str | None = None
+    assets: float | None = None
+    pending_cases: float | None = None
+
+
+class ConstituencyReportCard(BaseModel):
+    """A Lok Sabha constituency's 'representation' report card, built from its sitting MP's declared facts,
+    compared to state/national averages + nearby constituencies. External socio-economic indicators land in a
+    later phase. Every number traces to the underlying sourced fact; unmatched constituencies render '—'."""
+    pc_id: int
+    pc_name: str
+    pc_name_hi: str | None = None
+    state_name: str
+    pc_category: str | None = None
+    wikidata_qid: str | None = None
+    mp_person_id: int | None = None
+    mp_name: str | None = None
+    party: str | None = None
+    convictions: int | None = None
+    cycle: str                               # e.g. 'LS18'
+    comparisons: dict[str, IndicatorComparison]
+    nearby: list[NearbyConstituency]

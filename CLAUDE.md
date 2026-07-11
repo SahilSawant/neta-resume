@@ -69,6 +69,7 @@ Every command is a thin wrapper over a pipeline in `ingestion/neta_ingest/pipeli
 | `neta enrich-switches` | attach sourced "why" narratives to detected switches |
 | `neta native-names` | backfill Devanagari names from Wikidata (18th LS) |
 | `neta attendance --house ls\|rs` | attach cumulative PRS attendance % to current-term office_terms |
+| `neta constituencies` | load the 543 LS constituencies (bundled boundaries) + nearest-neighbour adjacency, for the Constituency Report Card |
 
 **Typical full run order:** seeds → `ls-roster` / `rajya-sabha` → `myneta` (affidavits/criminal) →
 `enrich-missing` → `resolve` / `merge-cycles` → `canon-parties` → `party-switch` → `enrich-switches` →

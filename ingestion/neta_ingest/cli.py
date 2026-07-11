@@ -243,6 +243,14 @@ def enrich_switches() -> None:
     p.run()
 
 
+@app.command()
+def constituencies() -> None:
+    """Load the 543 LS constituencies (bundled boundaries) + build nearest-neighbour adjacency."""
+    from neta_ingest.pipelines.geo import constituencies as p
+
+    p.run()
+
+
 @app.command(name="canon-parties")
 def canon_parties() -> None:
     """Merge abbreviation/full-name duplicate party records and clear resulting false switches."""

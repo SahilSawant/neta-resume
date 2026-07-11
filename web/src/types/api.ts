@@ -218,6 +218,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/constituencies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Constituencies
+         * @description The 543 Lok Sabha constituencies (index for search / linking).
+         */
+        get: operations["list_constituencies_constituencies_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/constituencies/{pc_id}/report-card": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Report Card
+         * @description The report card for one constituency (by pc_id): MP representation indicators vs state/national/nearby.
+         */
+        get: operations["report_card_constituencies__pc_id__report_card_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/search": {
         parameters: {
             query?: never;
@@ -389,6 +429,55 @@ export interface components {
             /** Equivalent */
             equivalent?: string | null;
         };
+        /**
+         * ConstituencyReportCard
+         * @description A Lok Sabha constituency's 'representation' report card, built from its sitting MP's declared facts,
+         *     compared to state/national averages + nearby constituencies. External socio-economic indicators land in a
+         *     later phase. Every number traces to the underlying sourced fact; unmatched constituencies render '—'.
+         */
+        ConstituencyReportCard: {
+            /** Pc Id */
+            pc_id: number;
+            /** Pc Name */
+            pc_name: string;
+            /** Pc Name Hi */
+            pc_name_hi?: string | null;
+            /** State Name */
+            state_name: string;
+            /** Pc Category */
+            pc_category?: string | null;
+            /** Wikidata Qid */
+            wikidata_qid?: string | null;
+            /** Mp Person Id */
+            mp_person_id?: number | null;
+            /** Mp Name */
+            mp_name?: string | null;
+            /** Party */
+            party?: string | null;
+            /** Convictions */
+            convictions?: number | null;
+            /** Cycle */
+            cycle: string;
+            /** Comparisons */
+            comparisons: {
+                [key: string]: components["schemas"]["IndicatorComparison"];
+            };
+            /** Nearby */
+            nearby: components["schemas"]["NearbyConstituency"][];
+        };
+        /** ConstituencySummary */
+        ConstituencySummary: {
+            /** Pc Id */
+            pc_id: number;
+            /** Pc Name */
+            pc_name: string;
+            /** Pc Name Hi */
+            pc_name_hi?: string | null;
+            /** State Name */
+            state_name: string;
+            /** Pc Category */
+            pc_category?: string | null;
+        };
         /** Contact */
         Contact: {
             /** Channel Type */
@@ -478,6 +567,26 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /**
+         * IndicatorComparison
+         * @description One indicator's value vs its state + national average, with a neutral percentile. Missing ≠ zero:
+         *     a null value means unmatched/unreported, not a value of zero. Descriptive, never a ranking of merit.
+         */
+        IndicatorComparison: {
+            /** Value */
+            value?: number | null;
+            /** State Avg */
+            state_avg?: number | null;
+            /** National Avg */
+            national_avg?: number | null;
+            /** Percentile */
+            percentile?: number | null;
+            /**
+             * Coverage
+             * @default 0
+             */
+            coverage: number;
+        };
         /** MinistryCount */
         MinistryCount: {
             /** Ministry */
@@ -499,6 +608,21 @@ export interface components {
             count: number;
             /** Top Theme */
             top_theme?: string | null;
+        };
+        /** NearbyConstituency */
+        NearbyConstituency: {
+            /** Pc Id */
+            pc_id: number;
+            /** Pc Name */
+            pc_name: string;
+            /** State Name */
+            state_name: string;
+            /** Mp Name */
+            mp_name?: string | null;
+            /** Assets */
+            assets?: number | null;
+            /** Pending Cases */
+            pending_cases?: number | null;
         };
         /** NewsItem */
         NewsItem: {
@@ -522,6 +646,8 @@ export interface components {
             cycle_number: number;
             /** Constituency */
             constituency: string | null;
+            /** Constituency Pc Id */
+            constituency_pc_id?: number | null;
             /** State */
             state: string | null;
             /** Party */
@@ -1258,6 +1384,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ThemeFocusBreakdown"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_constituencies_constituencies_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConstituencySummary"][];
+                };
+            };
+        };
+    };
+    report_card_constituencies__pc_id__report_card_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pc_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConstituencyReportCard"];
                 };
             };
             /** @description Validation Error */

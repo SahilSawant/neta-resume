@@ -12,7 +12,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from neta_api.deps import settings
 from neta_api.ratelimit import RateLimitMiddleware
-from neta_api.routers import aggregate, elections, parliament, persons, questions, search, stats, visits
+from neta_api.routers import (
+    aggregate, constituencies, elections, parliament, persons, questions, search, stats, visits,
+)
 
 app = FastAPI(
     title="Neta-Resume API",
@@ -37,6 +39,7 @@ app.include_router(persons.router)
 app.include_router(questions.router)
 app.include_router(parliament.router)
 app.include_router(aggregate.router)
+app.include_router(constituencies.router)
 app.include_router(search.router)
 app.include_router(stats.router)
 app.include_router(visits.router)

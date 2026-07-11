@@ -283,6 +283,7 @@ def build_resume(db: Session, person_id: int) -> PersonResume | None:
             house=r.house,
             cycle_number=r.cycle_number,
             constituency=r.constituency,
+            constituency_pc_id=r.constituency_pc_id,
             state=r.state,
             party=r.party,
             membership_type=r.membership_type,
@@ -298,6 +299,10 @@ def build_resume(db: Session, person_id: int) -> PersonResume | None:
                 """
                 SELECT h.name AS house, tc.number AS cycle_number, ot.constituency,
                        COALESCE(ot.ls_state_code, ot.rs_state_code) AS state,
+                       (SELECT c.pc_id FROM constituency c
+                        WHERE c.pc_name_normalized = nr_norm(ot.constituency)
+                          AND nr_canon_state(c.state_name) = nr_canon_state(ot.ls_state_code)
+                        LIMIT 1) AS constituency_pc_id,
                        pt.canonical_name AS party, ot.membership_type, ot.start_date, ot.end_date,
                        ot.status, s.code AS source_code, s.name AS source_name, s.trust_tier,
                        sr.native_url, ot.attendance_pct,

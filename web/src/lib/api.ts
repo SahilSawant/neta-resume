@@ -165,6 +165,27 @@ export function getElections(): Promise<Election[]> {
   return getJSON<Election[]>("/elections", 600);
 }
 
+/** Constituency Report Card — a LS constituency's representation profile (its MP's declared facts) vs
+ * state avg, national avg, and nearby constituencies. */
+export type ConstituencySummary = { pc_id: number; pc_name: string; pc_name_hi: string | null; state_name: string; pc_category: string | null };
+export type IndicatorComparison = { value: number | null; state_avg: number | null; national_avg: number | null; percentile: number | null; coverage: number };
+export type NearbyConstituency = { pc_id: number; pc_name: string; state_name: string; mp_name: string | null; assets: number | null; pending_cases: number | null };
+export type ConstituencyReportCard = {
+  pc_id: number; pc_name: string; pc_name_hi: string | null; state_name: string; pc_category: string | null;
+  wikidata_qid: string | null; mp_person_id: number | null; mp_name: string | null; party: string | null;
+  convictions: number | null; cycle: string;
+  comparisons: Record<string, IndicatorComparison>; nearby: NearbyConstituency[];
+};
+export function getConstituencies(): Promise<ConstituencySummary[]> {
+  return getJSON<ConstituencySummary[]>("/constituencies", 86400);
+}
+export async function getConstituencyReport(pcId: number): Promise<ConstituencyReportCard | null> {
+  const res = await fetch(`${API_BASE}/constituencies/${pcId}/report-card`, { next: { revalidate: 3600 } });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`API ${res.status} for constituency ${pcId}`);
+  return res.json();
+}
+
 /** Photos are served via the API proxy (upstream blocks cross-origin embedding). */
 export function photoSrc(id: number, hasPhoto: string | null | undefined): string | null {
   return hasPhoto ? `${API_BASE}/persons/${id}/photo` : null;

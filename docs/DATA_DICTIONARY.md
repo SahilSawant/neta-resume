@@ -292,3 +292,27 @@ A curated, versionable reference table (seeded via `db/seeds/ministry_themes.sql
 `parliamentary_question` to it and `GROUP BY theme`; unmapped ministries render as **"Other"**. Editorial by
 nature (grouping is a judgment call) — kept auditable here and labelled in the UI as *derived from the
 official ministry each question addresses*, never a value judgment.
+
+### `constituency` — Lok Sabha constituency registry (added in 0028)
+| Column | Type | Notes |
+|---|---|---|
+| `pc_id` | integer UNIQUE | stable id from the bundled boundary set (`web/src/data/pc-boundaries.json`) |
+| `pc_no` | integer | number within the state |
+| `state_name` | text | UPPER full state name, aligns with `office_term.ls_state_code` |
+| `pc_name` / `pc_name_hi` | text | display name + Devanagari |
+| `pc_name_normalized` | text | upper + non-alnum folded, to match `office_term.constituency` |
+| `pc_category` | text | GEN \| SC \| ST |
+| `wikidata_qid` | text | |
+| `center_lat` / `center_lng` | double | rough centroid (mean of boundary vertices) |
+
+Reference geography (no per-row provenance). Loaded by `neta constituencies`. Two SQL helpers ship with it —
+`nr_norm(text)` and `nr_canon_state(text)` — used to join constituency ↔ office_term at read time despite
+inconsistent name/state spellings across cycles.
+
+### `constituency_adjacency` — nearest-neighbour edges (added in 0028)
+| Column | Type | Notes |
+|---|---|---|
+| `constituency_id` / `neighbor_id` | bigint FK→constituency | directed edge |
+| `rank` | smallint | 1 = nearest (by centroid distance, same-state preferred) |
+
+Powers the "nearby constituencies" comparison on the report card. Rebuilt idempotently by `neta constituencies`.

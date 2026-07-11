@@ -124,7 +124,9 @@ export default async function PersonPage({ params }: { params: Promise<{ id: str
                   <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 9, marginTop: 16 }}>
                     <PartyPill party={currentParty} />
                     {lead && <Meta>{lead.membership_type === "nominated" ? "Nominated" : "MP"} · {lead.house}</Meta>}
-                    {(lead?.constituency ?? lead?.state) && <><Sep /><Meta>{lead?.constituency ?? lead?.state}</Meta></>}
+                    {lead?.constituency && lead?.constituency_pc_id
+                      ? <><Sep /><Link href={`/constituency/${lead.constituency_pc_id}`} className="navlink" style={{ textDecoration: "none" }}><Meta>{lead.constituency} ↗</Meta></Link></>
+                      : (lead?.constituency ?? lead?.state) && <><Sep /><Meta>{lead?.constituency ?? lead?.state}</Meta></>}
                     {resume.age != null && <><Sep /><Meta>Age {resume.age}</Meta></>}
                     <Sep />
                     <Meta>{resume.office_terms.length} term{resume.office_terms.length === 1 ? "" : "s"} on file</Meta>

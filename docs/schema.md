@@ -29,6 +29,8 @@ carries a `source_ref_id` and date-of-observation, so any datapoint links back t
 | `parliamentary_question` | individual questions asked (subject, ministry, type, date, PDF) | `source_ref_id` (PRS) |
 | `parliamentary_debate` | debates participated in (title, type, date, PDF) | `source_ref_id` (PRS) |
 | `ministry_theme` | curated ministry → policy-theme map (read-time "policy focus") | seed |
+| `constituency` | 543 LS constituency registry (pc_id, name, state, category, centroid) from bundled boundaries | reference |
+| `constituency_adjacency` | nearest-neighbour edges (by centroid) powering "nearby constituencies" | reference |
 
 Identity/ER working tables (`person_name_variant` above, plus `person_identity_signals`,
 `person_merge_candidate`, `person_phonetic_key`, `affidavit_relatives`) and the parliamentary set are
