@@ -45,12 +45,12 @@ export function ReportDiscrepancyButton({
   const triggerStyle: React.CSSProperties =
     variant === "dark"
       ? {
-          fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 12.5, fontWeight: 600,
+          fontFamily: "var(--font-serif)", fontSize: 12.5, fontWeight: 600,
           padding: "8px 16px", borderRadius: 8, border: "none", background: "var(--btn-bg)",
           color: "var(--btn-fg)", cursor: "pointer",
         }
       : {
-          fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 12.5, fontWeight: 600,
+          fontFamily: "var(--font-serif)", fontSize: 12.5, fontWeight: 600,
           padding: "8px 14px", borderRadius: 8, border: "1px solid var(--border)",
           background: "transparent", color: "var(--ink2)", cursor: "pointer",
         };

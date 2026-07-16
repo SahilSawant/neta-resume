@@ -83,7 +83,7 @@ export function ParliamentConsole({
                 className="seg"
                 onClick={() => go(key)}
                 style={{
-                  fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 14, fontWeight: 600, padding: "12px clamp(12px,3vw,20px)",
+                  fontFamily: "var(--font-serif)", fontSize: 14, fontWeight: 600, padding: "12px clamp(12px,3vw,20px)",
                   border: "none", background: "transparent", cursor: "pointer", marginBottom: -1, whiteSpace: "nowrap",
                   color: active ? "var(--ink)" : "var(--muted)",
                   borderBottom: `2px solid ${active ? "var(--accent)" : "transparent"}`,

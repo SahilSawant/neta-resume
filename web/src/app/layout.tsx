@@ -1,8 +1,33 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense, type ReactNode } from "react";
+import { Bricolage_Grotesque, IBM_Plex_Mono, IBM_Plex_Sans_Devanagari } from "next/font/google";
 import { Footer } from "@/components/Footer";
 import { RouteProgress } from "@/components/RouteProgress";
 import "./globals.css";
+
+// Self-host the three brand families with next/font (was three render-blocking <link>s to Google's CDN).
+// Each exposes a CSS variable that globals.css + inline styles reference (--font-serif / -mono / -deva);
+// `display: swap` keeps text visible while the font loads and next/font's size-adjust fallback avoids the
+// layout shift the old <link> approach had. Bricolage is variable (opsz + wght axes); the IBM Plex faces
+// are non-variable, so their weights must be listed explicitly.
+const bricolage = Bricolage_Grotesque({
+  subsets: ["latin"],
+  axes: ["opsz"],
+  display: "swap",
+  variable: "--font-serif",
+});
+const plexDeva = IBM_Plex_Sans_Devanagari({
+  subsets: ["devanagari", "latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-deva",
+});
+const plexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+  variable: "--font-mono",
+});
 
 // Canonical site URL for metadata / OG / canonical links. Defaults to the custom domain (NOT Vercel's
 // *.vercel.app alias, which VERCEL_PROJECT_PRODUCTION_URL would give); override per-env if needed.
@@ -52,14 +77,13 @@ const themeInit = `(function(){try{var t=localStorage.getItem('nr-theme');if(t)d
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" data-theme="light" suppressHydrationWarning>
+    <html
+      lang="en"
+      data-theme="light"
+      className={`${bricolage.variable} ${plexDeva.variable} ${plexMono.variable}`}
+      suppressHydrationWarning
+    >
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=IBM+Plex+Sans+Devanagari:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
-          rel="stylesheet"
-        />
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
       </head>
       <body className="scroll">
