@@ -8,7 +8,11 @@ import { Frame, PhotoBox, PartyPill } from "@/components/ui";
 import { ProfileTabs } from "@/components/resume/ProfileTabs";
 import { ReportDiscrepancyButton } from "@/components/ReportDiscrepancy";
 
-export const dynamic = "force-dynamic";
+// ISR: the resume is a mostly-static public record, so serve cached HTML from the edge and revalidate
+// hourly rather than re-rendering per request. Reads `params` only (no searchParams/headers), so the page
+// is genuinely static-able; a freshly-ingested change appears within the revalidate window. `dynamicParams`
+// defaults to true, so an id we never pre-rendered still renders on-demand and caches on first visit.
+export const revalidate = 3600;
 
 const SITE = "https://neta-resume.app";
 

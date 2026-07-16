@@ -3,7 +3,9 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { getElections, type Election } from "@/lib/api";
 import { pretty, year } from "@/lib/format";
 
-export const dynamic = "force-dynamic";
+// ISR: no dynamic input (reads nothing per-request), so serve static HTML and revalidate every 10 min —
+// matches the getElections() fetch TTL and keeps the election list fresh enough for a slowly-changing set.
+export const revalidate = 600;
 export const metadata = { title: "Elections", description: "Indian elections and their winners — Lok Sabha, Rajya Sabha and state assemblies — with sourced candidate records and results." };
 
 const LEVEL_LABEL: Record<string, string> = { national: "National", state: "State", municipal: "Municipal" };
