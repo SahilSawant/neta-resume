@@ -15,8 +15,10 @@ import { getStats, type Stats } from "@/lib/api";
 const FEATURES = [
   { icon: "₹", title: "Wealth declared", body: "Assets, liabilities and income from the candidate's own ECI affidavits — every cycle, side by side." },
   { icon: "§", title: "Cases pending", body: "Criminal cases with IPC/BNS sections and a severity tier. Always pending-vs-convicted; never a verdict." },
+  { icon: "¶", title: "In Parliament", body: "Questions asked, debates joined and attendance — each measured against the House median, from PRS." },
   { icon: "⇄", title: "Parties switched", body: "Every party held over a career, with when each stint began and ended — by the public record." },
   { icon: "⌂", title: "Offices held", body: "The full posting history across the Lok Sabha, Rajya Sabha and state legislatures, over time." },
+  { icon: "⌕", title: "In the news", body: "Recent headlines that mention the legislator, auto-gathered from public news and linked to the publisher." },
 ];
 
 export default async function Home() {
@@ -77,8 +79,9 @@ export default async function Home() {
             Know exactly who represents you.
           </h1>
           <p className="fadeUp" style={{ fontSize: "clamp(15px,3.6vw,18px)", lineHeight: 1.55, color: "var(--ink2)", margin: "0 0 30px", maxWidth: "54ch" }}>
-            The full public record of every legislator in India — wealth declared, cases pending, parties switched —
-            sourced to the Election Commission and shown without spin.
+            The full public record of every legislator in India — wealth declared, cases pending, parties switched,
+            and what they ask in Parliament — plus the country&rsquo;s own official numbers, every fact sourced and
+            shown without spin.
           </p>
           <div className="fadeUp nr-hero-actions" style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "stretch" }}>
             <div style={{ minWidth: 200, maxWidth: 440, flex: 1, display: "flex" }}>
