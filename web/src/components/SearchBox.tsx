@@ -40,7 +40,7 @@ export function SearchBox({
         placeholder={placeholder}
         aria-label="Search legislators"
         style={{
-          border: "none", outline: "none", background: "transparent", fontFamily: "'Bricolage Grotesque',sans-serif",
+          border: "none", outline: "none", background: "transparent", fontFamily: "var(--font-serif)",
           fontSize: big ? 14.5 : 13.5, color: "var(--ink)", width: "100%",
         }}
       />
@@ -48,7 +48,7 @@ export function SearchBox({
         type="submit"
         className="btnDark"
         style={{
-          flexShrink: 0, fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: big ? 13.5 : 12.5,
+          flexShrink: 0, fontFamily: "var(--font-serif)", fontSize: big ? 13.5 : 12.5,
           fontWeight: 600, padding: big ? "9px 18px" : "7px 14px", borderRadius: 7, border: "none",
           background: "var(--btn-bg)", color: "var(--btn-fg)", cursor: "pointer",
         }}

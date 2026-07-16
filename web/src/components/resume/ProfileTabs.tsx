@@ -36,7 +36,7 @@ export function ProfileTabs({ resume }: { resume: PersonResume }) {
                 className="seg"
                 onClick={() => setTab(t)}
                 style={{
-                  fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 13.5, fontWeight: 600, padding: "14px clamp(11px,3vw,18px)",
+                  fontFamily: "var(--font-serif)", fontSize: 13.5, fontWeight: 600, padding: "14px clamp(11px,3vw,18px)",
                   border: "none", background: "transparent", cursor: "pointer", marginBottom: -1,
                   color: active ? "var(--ink)" : "var(--muted)",
                   borderBottom: `2px solid ${active ? "var(--accent)" : "transparent"}`,
@@ -91,7 +91,7 @@ function wealthPoints(resume: PersonResume) {
 }
 
 const cardStyle: React.CSSProperties = { minWidth: 0, border: "1px solid var(--rule)", borderRadius: 12, background: "var(--card2)", padding: "clamp(16px,4vw,24px)" };
-const headStyle: React.CSSProperties = { fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 16, fontWeight: 600 };
+const headStyle: React.CSSProperties = { fontFamily: "var(--font-serif)", fontSize: 16, fontWeight: 600 };
 
 function Overview({ resume }: { resume: PersonResume }) {
   const pts = wealthPoints(resume);

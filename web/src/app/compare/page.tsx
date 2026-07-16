@@ -36,7 +36,7 @@ function Column({ r }: { r: PersonResume | null }) {
       </div>
       <div style={{ borderTop: "1px solid var(--rule)", padding: "16px 18px 20px" }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
-          <span style={{ fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 14, fontWeight: 600 }}>Policy focus</span>
+          <span style={{ fontFamily: "var(--font-serif)", fontSize: 14, fontWeight: 600 }}>Policy focus</span>
           <span className="mono" style={{ fontSize: 11, color: "var(--faint)" }}>{qCount != null ? `${qCount} questions` : "no questions"}</span>
         </div>
         {focus.length === 0 ? (

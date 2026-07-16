@@ -39,7 +39,7 @@ export function ParliamentSearchInput({ initial = "", kind, theme, house, big = 
         placeholder={big ? "Search questions & debates by topic — railways, MSP, NEET…" : "Search questions & debates — e.g. railways, MSP, NEET…"}
         aria-label="Search the parliamentary record"
         style={{
-          border: "none", outline: "none", background: "transparent", fontFamily: "'Bricolage Grotesque',sans-serif",
+          border: "none", outline: "none", background: "transparent", fontFamily: "var(--font-serif)",
           fontSize: big ? 16 : 14.5, color: "var(--ink)", width: "100%",
         }}
       />
@@ -47,7 +47,7 @@ export function ParliamentSearchInput({ initial = "", kind, theme, house, big = 
         type="submit"
         className="btnDark"
         style={{
-          flexShrink: 0, fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: big ? 14 : 13.5, fontWeight: 600,
+          flexShrink: 0, fontFamily: "var(--font-serif)", fontSize: big ? 14 : 13.5, fontWeight: 600,
           padding: big ? "11px 22px" : "9px 18px", borderRadius: big ? 9 : 7, border: "none",
           background: "var(--btn-bg)", color: "var(--btn-fg)", cursor: "pointer",
         }}

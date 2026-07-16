@@ -12,7 +12,7 @@ type Scope = "all" | "ls" | "rs" | "state" | "municipal" | "election";
 const titleCase = (s: string) => s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 
 const selectStyle: React.CSSProperties = {
-  fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 13, color: "var(--ink)",
+  fontFamily: "var(--font-serif)", fontSize: 13, color: "var(--ink)",
   background: "var(--card2)", border: "1px solid var(--border)", borderRadius: 8,
   padding: "9px 12px", cursor: "pointer", outline: "none", minWidth: 0,
 };
@@ -131,7 +131,7 @@ export function LegislatorBrowser({
             onChange={(e) => onSearch(e.target.value)}
             placeholder="Search name, party or constituency…"
             aria-label="Search this list"
-            style={{ border: "none", outline: "none", background: "transparent", fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 13.5, color: "var(--ink)", width: "100%" }}
+            style={{ border: "none", outline: "none", background: "transparent", fontFamily: "var(--font-serif)", fontSize: 13.5, color: "var(--ink)", width: "100%" }}
           />
         </div>
 
@@ -210,7 +210,7 @@ export function LegislatorBrowser({
                   className="btnGhost"
                   disabled={page <= 1}
                   onClick={() => navigate({ page: String(page - 1) }, true)}
-                  style={{ fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 13, fontWeight: 600, padding: "9px 18px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--card2)", color: "var(--ink)", cursor: "pointer" }}
+                  style={{ fontFamily: "var(--font-serif)", fontSize: 13, fontWeight: 600, padding: "9px 18px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--card2)", color: "var(--ink)", cursor: "pointer" }}
                 >
                   ← Prev
                 </button>
@@ -222,7 +222,7 @@ export function LegislatorBrowser({
                   className="btnGhost"
                   disabled={page >= totalPages}
                   onClick={() => navigate({ page: String(page + 1) }, true)}
-                  style={{ fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: 13, fontWeight: 600, padding: "9px 18px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--card2)", color: "var(--ink)", cursor: "pointer" }}
+                  style={{ fontFamily: "var(--font-serif)", fontSize: 13, fontWeight: 600, padding: "9px 18px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--card2)", color: "var(--ink)", cursor: "pointer" }}
                 >
                   Next →
                 </button>
