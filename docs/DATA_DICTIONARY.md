@@ -300,7 +300,7 @@ official ministry each question addresses*, never a value judgment.
 | `name` | text | the source's official series name (descriptive, not ours) |
 | `unit` | text | display unit label (`US$`, `%`, `years`, `per 1,000 live births`, …) |
 | `format` | text | render hint: `usd_compact` \| `pct` \| `number` \| `count_compact` \| `count_in` (Indian lakh/crore) |
-| `category` | text | dashboard section (`Economy & Growth`, `Health`, `Education & Institutions`, …) |
+| `category` | text | dashboard section (`Economy & Growth`, `Health`, `Education`, `Justice & Safety`, …) |
 | `category_order` | smallint | section order on the page |
 | `ind_order` | smallint | order within the section |
 | `polarity` | smallint | (0029) `+1` higher-is-better, `-1` lower-is-better, `0` neutral — colours the YoY change chip |
